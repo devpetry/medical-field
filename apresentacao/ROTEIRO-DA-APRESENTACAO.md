@@ -21,10 +21,10 @@ Tudo o que você faz no dia, em ordem: do que levar até desligar. A apresentaç
 
 ## 1. Antes do dia
 
-1. **Pendrive** com os dois arquivos da Release (link acima): `MedicalField-1.0.0.AppImage` e `abrir-medicalfield.sh`. Leve-os mesmo podendo baixar na hora: a rede do laboratório pode estar lenta.
+1. **Tudo vem do GitHub:** os executáveis estão na Release (link acima) e o restante (roteiro, diagramas, vídeo) em https://github.com/devpetry/medical-field. Não é preciso levar nada além de anotações.
 2. **Anote** a senha da VM e o login do Mailtrap. No PC do professor não há a sua chave SSH, então a VM vai pedir a senha.
 3. **Na véspera**, de casa, confira e zere a VM (passos 3 e 4 abaixo). Assim, no dia, só se confirma.
-4. **Plano B** no pendrive: o vídeo `video/MedicalField_video_explicativo.mp4` e a pasta `apresentacao/diagramas/`.
+4. **Plano B:** o vídeo (`video/MedicalField_video_explicativo.mp4`) e os diagramas (`apresentacao/diagramas/`) abrem direto no GitHub, pelo navegador.
 
 ---
 
@@ -89,7 +89,7 @@ Digite `ZERAR` e Enter. No fim aparece algo como `4 profissionais, 3 medicamento
 ## 6. Abrir o cliente desktop
 
 1. Abra uma **segunda aba** do terminal (**Ctrl+Shift+T**).
-2. Copie os dois arquivos do pendrive para uma pasta, por exemplo `~/MedicalField`. Ou baixe da Release pelo navegador; eles vão para `~/Downloads`.
+2. No navegador, abra https://github.com/devpetry/medical-field/releases/tag/v1.0.0 e baixe `MedicalField-1.0.0.AppImage` (110 MB) e `abrir-medicalfield.sh`. Eles vão para `~/Downloads`. Faça isso logo ao chegar: o download pode demorar se a rede do laboratório estiver lenta.
 3. Vá até a pasta e abra:
 
 ```bash
@@ -259,7 +259,7 @@ SELECT chave, entidade, resultado FROM clinical.idempotencia ORDER BY processado
 | Item em ERRO no cliente | Leia a mensagem em **Pendências**; geralmente é regra clínica (dose ou alergia) — vale mostrar como recurso |
 | E-mail não chega | Confira se está na inbox **MedicalField** do Mailtrap; o portal mostra ENVIADO ou o erro em **E-mails enviados** |
 | Cliente não abre | Use sempre o `abrir-medicalfield.sh`, não o AppImage direto |
-| Rede da sala cai | Vídeo explicativo e diagramas do pendrive |
+| Rede da sala cai | Sem rede não há GitHub nem VM: use os dados móveis do celular como roteador para abrir o vídeo e os diagramas |
 
 Se um passo falhar, diga o que deveria acontecer e por quê: entender o comportamento vale tanto quanto ver funcionando.
 
