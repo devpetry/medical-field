@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><title>15 · Observer · codigo</title><link rel="stylesheet" href="base.css"><style>
+html { background:#071224; }
+.legenda { position:absolute; left:50%; bottom:36px; transform:translateX(-50%); max-width:1640px; text-align:center;
+  font-size:34px; line-height:1.35; padding:16px 30px; border-radius:16px; background:rgba(3,8,18,.86); color:#fff; }
+.selo { position:absolute; left:84px; top:30px; font-size:20px; font-weight:800; letter-spacing:1px; text-transform:uppercase;
+  color:var(--c); }
+.codigo { position:absolute; left:80px; right:80px; top:190px; bottom:220px; display:flex; gap:28px; }
+.arq { flex:1; display:flex; flex-direction:column; min-width:0; border:3px solid var(--c); border-radius:20px; overflow:hidden;
+  background:#050c1a; }
+.arq .nome { padding:12px 22px; font-size:21px; font-weight:700; color:#071224; background:var(--c); white-space:nowrap;
+  overflow:hidden; text-overflow:ellipsis; direction:rtl; text-align:left; }
+.arq pre { margin:0; padding:14px 0; font-family:"DejaVu Sans Mono", monospace; color:#d6e2f3; overflow:hidden; }
+.arq .ln { display:block; padding:0 22px 0 0; white-space:pre; }
+.arq .ln i { display:inline-block; width:64px; padding-right:18px; text-align:right; color:#4f6280; font-style:normal; }
+.arq .ln.hl { background:color-mix(in srgb, var(--c) 20%, transparent); box-shadow:inset 6px 0 0 var(--c); color:#fff; }
+.arq .ln.sep { color:#4f6280; }
+.capa h1 { top:300px; font-size:84px; } .capa .sub { top:420px; font-size:34px; }
+.chips { position:absolute; left:82px; top:520px; display:flex; flex-wrap:wrap; gap:18px; width:1500px; }
+.chips span { font-size:30px; font-weight:700; padding:12px 26px; border-radius:999px; border:3px solid var(--c);
+  background:color-mix(in srgb, var(--c) 14%, transparent); }
+.imagem { position:absolute; left:50%; top:16px; transform:translateX(-50%); height:760px; border-radius:18px; }
+.codigo { bottom:90px; } .codigo.pilha { flex-direction:column; } .arq .ln i { width:72px; }</style></head>
+<body>
+<style>.arq pre { font-size:14.2px; line-height:1.45; }</style><div class="selo cliente">sugerido</div><h1>Observer · o sujeito e o inscrito</h1><div class="codigo cliente"><div class="arq"><div class="nome">client/src/main/connectivity.ts</div><pre><span class="ln"><i>9</i>export class ConnectivityMonitor {</span><span class="ln"><i>10</i>  simulacaoOnline = true;</span><span class="ln"><i>11</i>  servidorAlcancavel = false;</span><span class="ln hl"><i>12</i>  private ouvintes: Ouvinte[] = [];</span><span class="ln sep"><i></i>…</span><span class="ln hl"><i>22</i>  inscrever(fn: Ouvinte) {</span><span class="ln hl"><i>23</i>    this.ouvintes.push(fn);</span><span class="ln"><i>24</i>    return () =&gt; { this.ouvintes = this.ouvintes.filter((o) =&gt; o !== fn); };</span><span class="ln"><i>25</i>  }</span><span class="ln sep"><i></i>…</span><span class="ln"><i>41</i>  async verificar() {</span><span class="ln"><i>42</i>    this.servidorAlcancavel = this.simulacaoOnline ? await this.api().ping() : false;</span><span class="ln"><i>43</i>    this.notificarSeMudou();</span><span class="ln"><i>44</i>  }</span><span class="ln"><i>45</i></span><span class="ln hl"><i>46</i>  private notificarSeMudou() {</span><span class="ln hl"><i>47</i>    const agora = this.online;</span><span class="ln hl"><i>48</i>    if (agora !== this.ultimo) {</span><span class="ln hl"><i>49</i>      this.ultimo = agora;</span><span class="ln hl"><i>50</i>      for (const o of this.ouvintes) o(agora);</span><span class="ln"><i>51</i>    }</span><span class="ln"><i>52</i>  }</span></pre></div><div class="arq"><div class="nome">client/src/main/core.ts</div><pre><span class="ln"><i>67</i>    // Observer: quando a conexão volta, renova o token se preciso e esvazia a Outbox.</span><span class="ln hl"><i>68</i>    this.monitor.inscrever((online) =&gt; {</span><span class="ln"><i>69</i>      this.emitir();</span><span class="ln hl"><i>70</i>      if (online &amp;&amp; this.sessoes.ativa()) {</span><span class="ln"><i>71</i>        void (async () =&gt; {</span><span class="ln"><i>72</i>          if (!this.tokenValido()) await this.renovarToken();</span><span class="ln hl"><i>73</i>          await this.sync.sincronizar().catch(() =&gt; undefined);</span><span class="ln"><i>74</i>        })();</span><span class="ln"><i>75</i>      }</span><span class="ln"><i>76</i>    });</span><span class="ln"><i>77</i>  }</span></pre></div></div>
+<div class="rodape">MedicalField · Arquiteturas de Software · Univates 2026/B</div>
+<script src="base.js"></script>
+</body></html>

@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><title>11 · Repository · codigo</title><link rel="stylesheet" href="base.css"><style>
+html { background:#071224; }
+.legenda { position:absolute; left:50%; bottom:36px; transform:translateX(-50%); max-width:1640px; text-align:center;
+  font-size:34px; line-height:1.35; padding:16px 30px; border-radius:16px; background:rgba(3,8,18,.86); color:#fff; }
+.selo { position:absolute; left:84px; top:30px; font-size:20px; font-weight:800; letter-spacing:1px; text-transform:uppercase;
+  color:var(--c); }
+.codigo { position:absolute; left:80px; right:80px; top:190px; bottom:220px; display:flex; gap:28px; }
+.arq { flex:1; display:flex; flex-direction:column; min-width:0; border:3px solid var(--c); border-radius:20px; overflow:hidden;
+  background:#050c1a; }
+.arq .nome { padding:12px 22px; font-size:21px; font-weight:700; color:#071224; background:var(--c); white-space:nowrap;
+  overflow:hidden; text-overflow:ellipsis; direction:rtl; text-align:left; }
+.arq pre { margin:0; padding:14px 0; font-family:"DejaVu Sans Mono", monospace; color:#d6e2f3; overflow:hidden; }
+.arq .ln { display:block; padding:0 22px 0 0; white-space:pre; }
+.arq .ln i { display:inline-block; width:64px; padding-right:18px; text-align:right; color:#4f6280; font-style:normal; }
+.arq .ln.hl { background:color-mix(in srgb, var(--c) 20%, transparent); box-shadow:inset 6px 0 0 var(--c); color:#fff; }
+.arq .ln.sep { color:#4f6280; }
+.capa h1 { top:300px; font-size:84px; } .capa .sub { top:420px; font-size:34px; }
+.chips { position:absolute; left:82px; top:520px; display:flex; flex-wrap:wrap; gap:18px; width:1500px; }
+.chips span { font-size:30px; font-weight:700; padding:12px 26px; border-radius:999px; border:3px solid var(--c);
+  background:color-mix(in srgb, var(--c) 14%, transparent); }
+.imagem { position:absolute; left:50%; top:16px; transform:translateX(-50%); height:760px; border-radius:18px; }
+.codigo { bottom:90px; } .codigo.pilha { flex-direction:column; } .arq .ln i { width:72px; }</style></head>
+<body>
+<style>.arq pre { font-size:21.0px; line-height:1.45; }</style><div class="selo cliente">sugerido</div><h1>Repository · no código</h1><div class="codigo cliente"><div class="arq"><div class="nome">client/src/main/repositories.ts</div><pre><span class="ln hl"><i>7</i>/*</span><span class="ln hl"><i>8</i> * Repository Pattern: a interface gráfica e o SyncService só conversam com estes</span><span class="ln hl"><i>9</i> * repositórios (SQLite local) e com o ApiClient (REST remoto), nunca com SQL direto.</span><span class="ln"><i>10</i> */</span><span class="ln sep"><i></i>…</span><span class="ln"><i>16</i>export class PessoaRepository {</span><span class="ln"><i>17</i>  constructor(private b: Banco) {}</span><span class="ln"><i>18</i></span><span class="ln hl"><i>19</i>  listar(busca = &#x27;&#x27;): Pessoa[] {</span><span class="ln hl"><i>20</i>    const q = `%${busca.trim().toLowerCase()}%`;</span><span class="ln hl"><i>21</i>    return this.b.all&lt;Linha&gt;(&#x27;SELECT * FROM pessoa WHERE lower(nome) LIKE ? OR cpf LIKE ? ORDER BY nome&#x27;, q, q).map(lerPessoa);</span><span class="ln"><i>22</i>  }</span><span class="ln"><i>23</i></span><span class="ln hl"><i>24</i>  buscar(id: string): Pessoa | null {</span><span class="ln hl"><i>25</i>    const r = this.b.get&lt;Linha&gt;(&#x27;SELECT * FROM pessoa WHERE id = ?&#x27;, id);</span><span class="ln"><i>26</i>    return r ? lerPessoa(r) : null;</span><span class="ln"><i>27</i>  }</span></pre></div></div>
+<div class="rodape">MedicalField · Arquiteturas de Software · Univates 2026/B</div>
+<script src="base.js"></script>
+</body></html>

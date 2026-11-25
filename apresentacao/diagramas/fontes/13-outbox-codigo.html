@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><title>13 · Transactional Outbox · codigo</title><link rel="stylesheet" href="base.css"><style>
+html { background:#071224; }
+.legenda { position:absolute; left:50%; bottom:36px; transform:translateX(-50%); max-width:1640px; text-align:center;
+  font-size:34px; line-height:1.35; padding:16px 30px; border-radius:16px; background:rgba(3,8,18,.86); color:#fff; }
+.selo { position:absolute; left:84px; top:30px; font-size:20px; font-weight:800; letter-spacing:1px; text-transform:uppercase;
+  color:var(--c); }
+.codigo { position:absolute; left:80px; right:80px; top:190px; bottom:220px; display:flex; gap:28px; }
+.arq { flex:1; display:flex; flex-direction:column; min-width:0; border:3px solid var(--c); border-radius:20px; overflow:hidden;
+  background:#050c1a; }
+.arq .nome { padding:12px 22px; font-size:21px; font-weight:700; color:#071224; background:var(--c); white-space:nowrap;
+  overflow:hidden; text-overflow:ellipsis; direction:rtl; text-align:left; }
+.arq pre { margin:0; padding:14px 0; font-family:"DejaVu Sans Mono", monospace; color:#d6e2f3; overflow:hidden; }
+.arq .ln { display:block; padding:0 22px 0 0; white-space:pre; }
+.arq .ln i { display:inline-block; width:64px; padding-right:18px; text-align:right; color:#4f6280; font-style:normal; }
+.arq .ln.hl { background:color-mix(in srgb, var(--c) 20%, transparent); box-shadow:inset 6px 0 0 var(--c); color:#fff; }
+.arq .ln.sep { color:#4f6280; }
+.capa h1 { top:300px; font-size:84px; } .capa .sub { top:420px; font-size:34px; }
+.chips { position:absolute; left:82px; top:520px; display:flex; flex-wrap:wrap; gap:18px; width:1500px; }
+.chips span { font-size:30px; font-weight:700; padding:12px 26px; border-radius:999px; border:3px solid var(--c);
+  background:color-mix(in srgb, var(--c) 14%, transparent); }
+.imagem { position:absolute; left:50%; top:16px; transform:translateX(-50%); height:760px; border-radius:18px; }
+.codigo { bottom:90px; } .codigo.pilha { flex-direction:column; } .arq .ln i { width:72px; }</style></head>
+<body>
+<style>.arq pre { font-size:19.9px; line-height:1.45; }</style><div class="selo banco">livre escolha</div><h1>Outbox · ao salvar e a fila</h1><div class="codigo pilha banco"><div class="arq"><div class="nome">client/src/main/core.ts</div><pre><span class="ln"><i>196</i>  salvarPessoa(dados: Partial&lt;Pessoa&gt;): Pessoa {</span><span class="ln sep"><i></i>…</span><span class="ln hl"><i>205</i>    this.banco.transacao(() =&gt; {</span><span class="ln hl"><i>206</i>      this.pessoas.gravar(p, &#x27;PENDENTE&#x27;);</span><span class="ln hl"><i>207</i>      this.outboxRepo.enfileirar(&#x27;PESSOA&#x27;, p.id, atual?.version ? &#x27;UPDATE&#x27; : &#x27;CREATE&#x27;, p.version, semLocal(p));</span><span class="ln hl"><i>208</i>      this.registrarOffline(atual ? &#x27;ATUALIZAR&#x27; : &#x27;CRIAR&#x27;, &#x27;pessoa&#x27;, p.id);</span><span class="ln hl"><i>209</i>    });</span><span class="ln"><i>210</i>    this.aposGravar();</span></pre></div><div class="arq"><div class="nome">client/src/main/repositories.ts</div><pre><span class="ln"><i>188</i>export class OutboxRepository {</span><span class="ln"><i>189</i>  constructor(private b: Banco) {}</span><span class="ln"><i>190</i></span><span class="ln hl"><i>191</i>  enfileirar(entidade: string, entidadeId: string, operacao: string, baseVersion: number, payload: unknown) {</span><span class="ln sep"><i></i>…</span><span class="ln"><i>199</i>      return;</span><span class="ln"><i>200</i>    }</span><span class="ln hl"><i>201</i>    // A chave de idempotência é um UUID do item: continua única mesmo se o banco local for recriado.</span><span class="ln hl"><i>202</i>    this.b.run(&#x27;INSERT INTO outbox (entidade, entidade_id, operacao, base_version, payload, criado_em, chave) VALUES (?,?,?,?,?,?,?)&#x27;,</span></pre></div></div>
+<div class="rodape">MedicalField · Arquiteturas de Software · Univates 2026/B</div>
+<script src="base.js"></script>
+</body></html>
