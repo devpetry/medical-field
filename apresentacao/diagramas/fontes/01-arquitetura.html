@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><title>01 · Arquitetura</title><link rel="stylesheet" href="base.css"></head>
+<body>
+<h1>Três serviços atrás de um único Nginx</h1>
+<div class="sub">O cliente roda no aparelho do socorrista; o servidor central, na VM da Univates</div>
+
+<div class="grupo" style="left:60px; top:230px; width:520px; height:330px"><div class="nome">Ambulância · notebook</div></div>
+<div class="caixa cliente" id="cliente" style="left:100px; top:300px; width:440px; height:220px">
+  <h3>Cliente desktop</h3><span class="tag">Electron + React</span>
+  <p>Banco <b>SQLite</b> e fila <b>Outbox</b><br>funciona sem internet</p>
+</div>
+
+<div class="grupo" style="left:60px; top:620px; width:520px; height:290px"><div class="nome">Hospital · navegador</div></div>
+<div class="caixa cliente" id="portal" style="left:100px; top:690px; width:440px; height:180px">
+  <h3>Portal administrativo</h3>
+  <p>consulta, auditoria,<br>PDF e e-mail · só ADMIN</p>
+</div>
+
+<div class="grupo" style="left:640px; top:200px; width:1240px; height:760px"><div class="nome">VM da Univates · Ubuntu · sem contêineres</div></div>
+<div class="caixa nginx" id="nginx" style="left:690px; top:270px; width:270px; height:640px">
+  <h3>Nginx</h3><span class="tag">porta 80</span>
+  <p>única porta<br>aberta<br><br>serve o portal<br><br>roteia <b>/api</b><br>para cada<br>serviço</p>
+</div>
+
+<div class="caixa node" id="auth" style="left:1150px; top:270px; width:400px; height:170px">
+  <h3>auth-service</h3><span class="tag">Node.js · :3001</span><p>login e JWT</p>
+</div>
+<div class="caixa java destaque" id="clinical" style="left:1150px; top:480px; width:400px; height:210px">
+  <h3>clinical-service</h3><span class="tag">Java 21 · :8080</span><p>cadastros · regras clínicas<br>sincronização · auditoria</p>
+</div>
+<div class="caixa python" id="document" style="left:1150px; top:740px; width:400px; height:170px">
+  <h3>document-service</h3><span class="tag">Python · :8000</span><p>ficha em PDF · e-mail</p>
+</div>
+
+<div class="caixa banco" id="pg" style="left:1615px; top:270px; width:240px; height:640px">
+  <h3>PostgreSQL</h3><p>um schema<br>e um usuário<br>por serviço<br><br><b>auth</b><br><b>clinical</b><br><b>audit</b><br><b>document</b></p>
+</div>
+
+<i class="seta" data-de="cliente.r.0.45" data-para="nginx.l" data-reta data-rotulo="HTTP + JWT<br>quando online" data-rotulo-pos="abaixo"></i>
+<i class="seta" data-de="portal.r" data-para="nginx.l" data-reta data-rotulo="HTTP + JWT"></i>
+<i class="seta" data-de="nginx.r.0.133" data-para="auth.l" data-reta data-rotulo="/api/auth"></i>
+<i class="seta" data-de="nginx.r.0.492" data-para="clinical.l" data-reta data-rotulo="/api/*"></i>
+<i class="seta" data-de="nginx.r.0.867" data-para="document.l" data-reta data-rotulo="/api/documento"></i>
+<i class="seta" data-de="document.t.0.85" data-para="clinical.b" data-reta data-rotulo="busca os dados da ficha" data-rotulo-pos="esquerda"></i>
+<i class="seta" data-de="auth.r" data-para="pg.l" data-reta></i>
+<i class="seta" data-de="clinical.r" data-para="pg.l" data-reta></i>
+<i class="seta" data-de="document.r" data-para="pg.l" data-reta></i>
+
+<div class="rodape">MedicalField · Arquiteturas de Software · Univates 2026/B</div>
+<script src="base.js"></script>
+</body></html>

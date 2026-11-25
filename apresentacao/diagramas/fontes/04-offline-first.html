@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><title>04 · Offline-first</title><link rel="stylesheet" href="base.css"></head>
+<body>
+<h1>Gravar nunca depende da rede</h1>
+<div class="sub">Online ou offline, o caminho é o mesmo; só muda quando a fila é enviada</div>
+
+<div class="caixa cliente" id="b1" style="left:80px; top:260px; width:420px; height:200px">
+  <h3>1 · Socorrista salva</h3><p>pessoa, prontuário<br>ou atendimento</p>
+</div>
+<div class="caixa banco destaque" id="b2" style="left:600px; top:260px; width:520px; height:200px">
+  <h3>2 · Uma transação</h3><p>registro no SQLite <b>+</b><br>item na <b>Outbox</b> (chave UUID)</p>
+</div>
+<div class="caixa neutro" id="b3" style="left:1220px; top:260px; width:320px; height:200px">
+  <h3>3 · Online?</h3><p>chave e servidor<br>alcançável</p>
+</div>
+<div class="caixa ok" id="b4" style="left:1610px; top:260px; width:250px; height:200px">
+  <h3>Envia na hora</h3><p>passo 7</p>
+</div>
+<div class="caixa erro" id="b5" style="left:1220px; top:620px; width:320px; height:220px">
+  <h3>Fica PENDENTE</h3><p>contador de<br>pendências sobe<br>passo 12</p>
+</div>
+<div class="caixa cliente" id="b6" style="left:660px; top:620px; width:460px; height:220px">
+  <h3>Chave volta a Online</h3><p><b>ConnectivityMonitor</b><br>(Observer) avisa os inscritos</p>
+</div>
+<div class="caixa ok" id="b7" style="left:80px; top:620px; width:480px; height:220px">
+  <h3>SyncService envia</h3><p>esvazia a Outbox sozinho,<br>sem clique · passo 14</p>
+</div>
+
+<i class="seta" data-de="b1.r" data-para="b2.l" data-reta></i>
+<i class="seta" data-de="b2.r" data-para="b3.l" data-reta></i>
+<i class="seta" data-de="b3.r" data-para="b4.l" data-reta data-rotulo="sim" data-cor="var(--ok)"></i>
+<i class="seta" data-de="b3.b" data-para="b5.t" data-reta data-rotulo="não" data-rotulo-pos="direita" data-cor="var(--erro)"></i>
+<i class="seta" data-de="b5.l" data-para="b6.r" data-reta data-rotulo="rede volta"></i>
+<i class="seta" data-de="b6.l" data-para="b7.r" data-reta></i>
+
+<div class="nota" style="left:80px; top:920px">Se a rede cair no meio do envio, nada se perde: o item continua <b>PENDENTE</b> e é reenviado.<br>O servidor reconhece a chave e responde <b>DUPLICADO</b> em vez de gravar de novo.</div>
+
+<div class="rodape">MedicalField · Arquiteturas de Software · Univates 2026/B</div>
+<script src="base.js"></script>
+</body></html>

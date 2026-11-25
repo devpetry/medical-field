@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><title>02 · PostgreSQL</title><link rel="stylesheet" href="base.css"></head>
+<body>
+<h1>Um banco, um schema por serviço</h1>
+<div class="sub">Cada serviço tem usuário próprio e só enxerga os seus dados; as tabelas nascem das migrações de cada um</div>
+
+<div class="grupo" style="left:60px; top:210px; width:1800px; height:700px"><div class="nome">banco medicalfield · PostgreSQL na VM · só em 127.0.0.1</div></div>
+
+<div class="caixa node" id="auth" style="left:100px; top:280px; width:400px; height:580px">
+  <h3>auth</h3><span class="tag">dono: mf_auth</span>
+  <p><b>profissional</b><br>registro, tipo, perfil (SOCORRISTA ou ADMIN), hash bcrypt da senha<br><br>
+  <b>schema_migrations</b><br>migrações aplicadas<br><br>grava log em <b>audit.access_log</b> (só INSERT)</p>
+</div>
+<div class="caixa java destaque" id="clinical" style="left:540px; top:280px; width:420px; height:580px">
+  <h3>clinical</h3><span class="tag">dono: mf_clinical</span>
+  <p><b>pessoa</b> · <b>prontuario</b><br><b>atendimento</b><br><b>sinal_vital</b><br><b>medicacao_administrada</b><br><b>medicamento</b><br><br>
+  <b>idempotencia</b><br>chave UUID + hash de cada item já sincronizado<br><br>migrações: <b>Flyway</b></p>
+</div>
+<div class="caixa token" id="audit" style="left:1000px; top:280px; width:400px; height:580px">
+  <h3>audit</h3><span class="tag">dono: mf_clinical</span>
+  <p><b>access_log</b><br>toda requisição dos 3 serviços: data/hora, IP, profissional, método, rota, status, tempo (ms), online ou offline<br><br>
+  <b>sync_evento</b><br>cada item sincronizado: estratégia, vencedor, antes e depois</p>
+</div>
+<div class="caixa python" id="document" style="left:1440px; top:280px; width:380px; height:580px">
+  <h3>document</h3><span class="tag">dono: mf_document</span>
+  <p><b>envio_email</b><br>destinatário, relação, status (ENVIADO ou ERRO), quem pediu, quando<br><br>
+  grava log em <b>audit.access_log</b> (só INSERT)</p>
+</div>
+<div class="nota" style="left:80px; top:950px">O <b>db/init.sql</b> cria só o banco, os schemas e os usuários. Pessoa, prontuário e atendimento usam <b>UUID gerado no aparelho</b>: dois aparelhos offline nunca colidem.</div>
+
+<div class="rodape">MedicalField · Arquiteturas de Software · Univates 2026/B</div>
+<script src="base.js"></script>
+</body></html>

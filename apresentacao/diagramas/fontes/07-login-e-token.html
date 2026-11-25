@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><title>07 · Login</title><link rel="stylesheet" href="base.css"></head>
+<body>
+<h1>Um login, um token aceito pelos três serviços</h1>
+<div class="sub">O auth-service emite o JWT; cada serviço valida a assinatura sozinho, sem consultar o auth</div>
+
+<div class="caixa cliente" id="cli" style="left:80px; top:250px; width:440px; height:340px">
+  <h3>Cliente ou portal</h3><p>registro (CRM, COREN ou<br>ID de socorrista) + senha<br><br>guarda o token e manda<br>em toda requisição</p>
+</div>
+<div class="caixa node" id="auth" style="left:760px; top:240px; width:460px; height:200px">
+  <h3>auth-service</h3><p>confere a senha com o<br>hash <b>bcrypt</b> e assina o JWT</p>
+</div>
+<div class="caixa neutro" id="svc" style="left:760px; top:500px; width:460px; height:200px">
+  <h3>clinical e document</h3><p>validam a assinatura<br>sozinhos · sem token → <b>401</b></p>
+</div>
+<div class="caixa token destaque" id="jwt" style="left:1320px; top:240px; width:530px; height:460px">
+  <h3>JWT · HS256 · 12 h</h3>
+  <p><b>sub</b> id do profissional<br><b>registro</b> · <b>tipo</b> · <b>nome</b><br><b>perfil</b> SOCORRISTA ou ADMIN<br><br>
+  assinado com o <b>JWT_SECRET</b>,<br>o mesmo nos três serviços<br><br>legível, mas não alterável</p>
+</div>
+
+<i class="seta" data-de="cli.r.0.29" data-para="auth.l" data-reta data-rotulo="1 · registro + senha"></i>
+<i class="seta" data-de="auth.l.0.78" data-para="cli.r" data-reta data-rotulo="2 · JWT" data-rotulo-pos="abaixo" data-cor="var(--token)"></i>
+<i class="seta" data-de="cli.r.0.86" data-para="svc.l" data-reta data-rotulo="3 · Bearer JWT"></i>
+<i class="seta" data-de="auth.r" data-para="jwt.l" data-reta data-rotulo="assina"></i>
+<i class="seta" data-de="svc.r" data-para="jwt.l" data-reta data-rotulo="validam"></i>
+
+<div class="caixa cliente" id="off" style="left:80px; top:780px; width:1770px; height:180px">
+  <h3>Login offline</h3><p>No último login online, o cliente guarda um hash da senha na tabela <b>sessao</b> do SQLite. Sem rede, confere a senha com esse hash<br>e libera o uso local; a sincronização espera a conexão voltar. Rotas de auditoria, profissionais e e-mails exigem perfil <b>ADMIN</b> (403).</p>
+</div>
+
+<div class="rodape">MedicalField · Arquiteturas de Software · Univates 2026/B</div>
+<script src="base.js"></script>
+</body></html>

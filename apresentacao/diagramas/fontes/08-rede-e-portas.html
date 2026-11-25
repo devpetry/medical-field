@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><title>08 · Rede</title><link rel="stylesheet" href="base.css"></head>
+<body>
+<h1>Só duas portas abertas na VM</h1>
+<div class="sub">O Nginx é a única entrada da aplicação; serviços e banco escutam apenas em 127.0.0.1</div>
+
+<div class="caixa cliente" id="cli" style="left:80px; top:260px; width:380px; height:120px">
+  <h3>Cliente desktop</h3><p>notebook</p>
+</div>
+<div class="caixa cliente" id="nav" style="left:80px; top:410px; width:380px; height:120px">
+  <h3>Navegador</h3><p>portal e Swagger</p>
+</div>
+<div class="caixa neutro" id="pm" style="left:80px; top:560px; width:380px; height:120px">
+  <h3>Postman</h3><p>testes das rotas</p>
+</div>
+<div class="caixa neutro" id="adm" style="left:80px; top:780px; width:380px; height:120px">
+  <h3>Administrador</h3><p>manutenção</p>
+</div>
+
+<div class="grupo" style="left:540px; top:200px; width:960px; height:780px"><div class="nome">VM · firewall ufw: só 22 e 80</div></div>
+<div class="caixa nginx destaque" id="nginx" style="left:600px; top:260px; width:330px; height:420px">
+  <h3>Nginx</h3><span class="tag">0.0.0.0:80</span>
+  <p>serve o portal<br>e o Swagger<br><br>roteia /api<br><br>sobrescreve o<br>X-Forwarded-For</p>
+</div>
+<div class="caixa neutro" id="ssh" style="left:600px; top:780px; width:330px; height:120px">
+  <h3>sshd</h3><p>0.0.0.0:22 · por chave</p>
+</div>
+<div class="caixa node" id="auth" style="left:1060px; top:260px; width:390px; height:120px">
+  <h3>auth-service</h3><p>127.0.0.1:3001</p>
+</div>
+<div class="caixa java" id="clinical" style="left:1060px; top:410px; width:390px; height:120px">
+  <h3>clinical-service</h3><p>127.0.0.1:8080</p>
+</div>
+<div class="caixa python" id="document" style="left:1060px; top:560px; width:390px; height:120px">
+  <h3>document-service</h3><p>127.0.0.1:8000</p>
+</div>
+<div class="caixa banco" id="pg" style="left:1060px; top:780px; width:390px; height:120px">
+  <h3>PostgreSQL</h3><p>127.0.0.1:5432 · usado pelos 3</p>
+</div>
+
+<div class="caixa token" style="left:1560px; top:200px; width:300px; height:780px">
+  <h3>Proteções</h3>
+  <p>serviços rodam com o usuário de sistema <b>medicalfield</b>, sem login<br><br>
+  um usuário de banco por serviço<br><br>
+  cabeçalhos <b>nosniff</b>, <b>DENY</b> e <b>no-referrer</b><br><br>
+  systemd reinicia o que cair e sobe tudo no boot</p>
+</div>
+
+<i class="seta" data-de="cli.r" data-para="nginx.l" data-reta data-rotulo=":80"></i>
+<i class="seta" data-de="nav.r" data-para="nginx.l" data-reta data-rotulo=":80"></i>
+<i class="seta" data-de="pm.r" data-para="nginx.l" data-reta data-rotulo=":80"></i>
+<i class="seta" data-de="adm.r" data-para="ssh.l" data-reta data-rotulo=":22"></i>
+<i class="seta" data-de="nginx.r.0.143" data-para="auth.l" data-reta></i>
+<i class="seta" data-de="nginx.r.0.5" data-para="clinical.l" data-reta></i>
+<i class="seta" data-de="nginx.r.0.857" data-para="document.l" data-reta></i>
+
+<div class="rodape">MedicalField · Arquiteturas de Software · Univates 2026/B</div>
+<script src="base.js"></script>
+</body></html>

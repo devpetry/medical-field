@@ -1,0 +1,63 @@
+/* Estilo comum dos slides (1920x1080). Uma cor por parte do sistema, as mesmas em todos. */
+:root {
+  --fundo: #071224;
+  --fundo2: #0b1d3a;
+  --texto: #eef3fb;
+  --suave: #9fb0c8;
+  --linha: #7f93b2;
+  --cliente: #38bdf8;  /* cliente e portal (React/Electron) */
+  --node: #84cc16;     /* auth-service */
+  --java: #fb923c;     /* clinical-service */
+  --python: #facc15;   /* document-service */
+  --nginx: #2dd4bf;
+  --banco: #a78bfa;    /* PostgreSQL e SQLite */
+  --token: #f472b6;    /* JWT, chaves, segurança */
+  --neutro: #94a3b8;
+  --ok: #4ade80;
+  --erro: #f87171;
+}
+* { box-sizing: border-box; margin: 0; }
+html, body { width: 1920px; height: 1080px; overflow: hidden; }
+body {
+  position: relative;
+  background: linear-gradient(160deg, var(--fundo), var(--fundo2));
+  color: var(--texto);
+  font-family: "Noto Sans", "Ubuntu", "DejaVu Sans", sans-serif;
+}
+h1 { position: absolute; left: 80px; top: 56px; font-size: 54px; font-weight: 800; letter-spacing: -0.5px; }
+.sub { position: absolute; left: 82px; top: 136px; font-size: 28px; color: var(--suave); }
+.rodape { position: absolute; right: 60px; bottom: 30px; font-size: 18px; color: #5f7290; }
+
+.caixa {
+  position: absolute;
+  border: 3px solid var(--c, var(--neutro));
+  border-radius: 22px;
+  background: color-mix(in srgb, var(--c, var(--neutro)) 11%, transparent);
+  padding: 22px 28px;
+}
+.caixa h3 { font-size: 32px; font-weight: 750; margin-bottom: 8px; }
+.caixa p { font-size: 23px; line-height: 1.38; color: #c9d5e6; }
+.caixa p b { color: var(--texto); }
+.caixa .tag {
+  display: inline-block; font-size: 19px; font-weight: 700; padding: 3px 12px; border-radius: 999px;
+  color: #071224; background: var(--c, var(--neutro)); margin-bottom: 10px;
+}
+.grupo {
+  position: absolute; border: 3px dashed #3a4d6b; border-radius: 28px; padding: 18px 26px;
+}
+.grupo > .nome { font-size: 22px; font-weight: 700; color: var(--suave); text-transform: uppercase; letter-spacing: 1px; }
+.nota { position: absolute; font-size: 24px; line-height: 1.4; color: var(--suave); }
+.nota b { color: var(--texto); }
+.destaque { box-shadow: 0 0 0 6px color-mix(in srgb, var(--c) 25%, transparent); }
+
+.cliente { --c: var(--cliente); } .node { --c: var(--node); } .java { --c: var(--java); }
+.python { --c: var(--python); } .nginx { --c: var(--nginx); } .banco { --c: var(--banco); }
+.token { --c: var(--token); } .neutro { --c: var(--neutro); } .ok { --c: var(--ok); } .erro { --c: var(--erro); }
+
+/* Setas, desenhadas pelo base.js a partir das caixas */
+svg#setas { position: absolute; inset: 0; width: 1920px; height: 1080px; pointer-events: none; overflow: visible; }
+.rotulo {
+  position: absolute; font-size: 21px; font-weight: 600; color: var(--suave); white-space: nowrap;
+  background: color-mix(in srgb, var(--fundo) 85%, transparent); padding: 2px 8px; border-radius: 8px;
+}
+.seta { display: none; }

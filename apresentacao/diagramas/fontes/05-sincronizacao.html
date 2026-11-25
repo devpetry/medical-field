@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><title>05 · Sincronização</title><link rel="stylesheet" href="base.css"></head>
+<body>
+<h1>Uma rodada de sincronização, em cinco mensagens</h1>
+<div class="sub">Dispara quando a rede volta, logo após salvar online e no botão Sincronizar</div>
+
+<div class="caixa cliente" id="cli" style="left:80px; top:230px; width:420px; height:750px">
+  <h3>Cliente</h3><span class="tag">SyncService</span>
+  <p>envia a Outbox em lotes,<br>na ordem de criação<br>(pessoa → prontuário<br>→ atendimento)<br><br>
+  marca cada item conforme<br>a resposta<br><br>
+  guarda o <b>serverTime</b><br>para o próximo pull<br><br>
+  token expirou (401)?<br>renova e repete</p>
+</div>
+<div class="caixa java destaque" id="srv" style="left:1400px; top:230px; width:460px; height:750px">
+  <h3>clinical-service</h3><span class="tag">SyncService</span>
+  <p>cada item, numa<br><b>transação própria</b>:<br><br>
+  1. chave já vista? →<br><b>DUPLICADO</b><br><br>
+  2. versão mudou? →<br><b>Strategy</b> resolve<br><br>
+  3. regras clínicas<br><br>
+  4. grava + <b>audit.sync_evento</b><br><br>
+  um item com erro não<br>trava os outros</p>
+</div>
+
+<i class="seta" data-de="cli.r.0.133" data-para="srv.l" data-reta data-rotulo="1 · POST /sync/push · itens da Outbox com chave UUID"></i>
+<i class="seta" data-de="srv.l.0.32" data-para="cli.r" data-reta data-rotulo="2 · resultado por item: APLICADO · DUPLICADO · CONFLITO_RESOLVIDO · ERRO" data-cor="var(--java)"></i>
+<i class="seta" data-de="cli.r.0.507" data-para="srv.l" data-reta data-rotulo="3 · POST /log · ações feitas offline"></i>
+<i class="seta" data-de="cli.r.0.693" data-para="srv.l" data-reta data-rotulo="4 · GET /sync/pull?since=última sincronização"></i>
+<i class="seta" data-de="srv.l.0.88" data-para="cli.r" data-reta data-rotulo="5 · o que mudou desde since − 30 s · medicamentos, pessoas…" data-cor="var(--java)"></i>
+
+<div class="rodape">MedicalField · Arquiteturas de Software · Univates 2026/B</div>
+<script src="base.js"></script>
+</body></html>

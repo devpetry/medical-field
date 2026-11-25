@@ -17,6 +17,7 @@ O socorrista registra o atendimento no cliente desktop, que grava tudo primeiro 
 | `deploy` | Nginx, unidades systemd e `install.sh` para a VM | — |
 | `postman` | Coleção com todas as rotas | Postman v2.1 |
 | `video` | Vídeo explicativo e o código que o gera | — |
+| `apresentacao` | Roteiro do dia, guia de demonstração e diagramas 16:9 ([README](apresentacao/README.md)) | Markdown · HTML → PNG |
 
 ## Credenciais de teste (seed)
 
@@ -86,6 +87,8 @@ sudo -u postgres psql -d medicalfield -f db/seed.sql
 ```
 
 O script cria o banco e os usuários, compila e instala os três serviços em `/opt/medicalfield`, publica o portal em `/var/www/medicalfield` e configura o Nginx (`deploy/nginx/medicalfield.conf`). No notebook da apresentação, o cliente aponta para a VM com `API_URL=http://<ip-da-vm>/api`.
+
+Com a VM já instalada: `deploy/atualizar.sh` atualiza o código sem tocar nos dados nem nos `.env`, `deploy/verificar.sh` confere tudo e `deploy/zerar.sh` volta ao começo do roteiro (detalhes em [apresentacao/ROTEIRO-DA-APRESENTACAO.md](apresentacao/ROTEIRO-DA-APRESENTACAO.md)).
 
 ## Roteiro de testes
 

@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><title>06 · Conflitos</title><link rel="stylesheet" href="base.css"></head>
+<body>
+<h1>Cada tipo de dado tem sua regra de conflito</h1>
+<div class="sub">Dois aparelhos alteram o mesmo registro offline: o servidor percebe pela versão e o Strategy decide</div>
+
+<div class="caixa neutro" id="det" style="left:80px; top:240px; width:560px; height:170px">
+  <h3>Conflito detectado</h3><p>base_version do cliente diferente<br>da versão atual no servidor</p>
+</div>
+<div class="caixa java" id="fab" style="left:710px; top:240px; width:500px; height:170px">
+  <h3>MergeStrategyFactory</h3><p>escolhe a estratégia<br>pela entidade</p>
+</div>
+
+<div class="caixa java" id="lww" style="left:80px; top:540px; width:560px; height:360px">
+  <h3>LastWriteWins</h3><span class="tag">pessoa · prontuário</span>
+  <p>vence o <b>updatedAt</b> mais recente<br><br>Ana mudou o telefone às 10:05,<br>Bruno às 10:02 → fica o da Ana</p>
+</div>
+<div class="caixa java destaque" id="app" style="left:690px; top:540px; width:540px; height:360px">
+  <h3>AppendOnlyMerge</h3><span class="tag">atendimento</span>
+  <p>campos simples: o mais recente<br><br><b>sinais vitais e medicações:</b><br>une as listas pelo id —<br>nenhum registro clínico se perde</p>
+</div>
+<div class="caixa java" id="sw" style="left:1280px; top:540px; width:560px; height:360px">
+  <h3>ServerWins</h3><span class="tag">medicamento</span>
+  <p>o servidor sempre vence<br><br>medicamentos só entram<br>pelo servidor; o cliente<br>nem pode enviá-los</p>
+</div>
+
+<i class="seta" data-de="det.r" data-para="fab.l" data-reta></i>
+<i class="seta" data-de="fab.b.0.2" data-para="lww.t"></i>
+<i class="seta" data-de="fab.b.0.5" data-para="app.t" data-reta></i>
+<i class="seta" data-de="fab.b.0.8" data-para="sw.t"></i>
+
+<div class="nota" style="left:80px; top:950px">Toda resolução fica em <b>audit.sync_evento</b>: estratégia usada, quem venceu e o registro antes e depois.</div>
+
+<div class="rodape">MedicalField · Arquiteturas de Software · Univates 2026/B</div>
+<script src="base.js"></script>
+</body></html>

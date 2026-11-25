@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><title>09 · Padrões</title><link rel="stylesheet" href="base.css"></head>
+<body>
+<h1>Sete padrões de projeto, cada um com um motivo</h1>
+<div class="sub">Onde estão no código e que problema resolvem</div>
+<div class="caixa cliente" id="rep" style="left:80px; top:230px; width:420px; height:360px">
+  <h3>Repository</h3><span class="tag">sugerido</span><p><b>onde:</b> repositories.ts no cliente; repositórios JPA no clinical<br><br><b>para quê:</b> a tela e o SyncService nunca escrevem SQL</p>
+</div>
+<div class="caixa java destaque" id="str" style="left:533px; top:230px; width:420px; height:360px">
+  <h3>Strategy</h3><span class="tag">sugerido</span><p><b>onde:</b> MergeStrategy e suas 3 implementações<br><br><b>para quê:</b> cada tipo de dado com sua regra de conflito</p>
+</div>
+<div class="caixa cliente" id="obs" style="left:986px; top:230px; width:420px; height:360px">
+  <h3>Observer</h3><span class="tag">sugerido</span><p><b>onde:</b> ConnectivityMonitor no cliente<br><br><b>para quê:</b> a volta da rede dispara a sincronização sozinha</p>
+</div>
+<div class="caixa banco" id="out" style="left:1439px; top:230px; width:420px; height:360px">
+  <h3>Outbox</h3><span class="tag">livre escolha</span><p><b>onde:</b> tabela outbox + SyncService<br><br><b>para quê:</b> nada se perde sem rede; reenviar é seguro</p>
+</div>
+<div class="caixa java" id="fab" style="left:80px; top:630px; width:420px; height:360px">
+  <h3>Factory</h3><span class="tag">livre escolha</span><p><b>onde:</b> MergeStrategyFactory<br><br><b>para quê:</b> escolhe a estratégia pela entidade</p>
+</div>
+<div class="caixa python" id="ada" style="left:533px; top:630px; width:420px; height:360px">
+  <h3>Adapter</h3><span class="tag">livre escolha</span><p><b>onde:</b> email_sender.py<br><br><b>para quê:</b> SMTP real ou arquivo .eml, sem mudar o serviço</p>
+</div>
+<div class="caixa nginx" id="cad" style="left:986px; top:630px; width:420px; height:360px">
+  <h3>Chain of Responsibility</h3><span class="tag">livre escolha</span><p><b>onde:</b> middlewares e filtros nos 3 serviços<br><br><b>para quê:</b> log de acesso e JWT antes da regra de negócio</p>
+</div>
+<div class="caixa neutro" style="left:1439px; top:630px; width:420px; height:360px">
+  <h3>3 + 4</h3><p>os três sugeridos pelo enunciado e mais quatro de livre escolha, cada um resolvendo um problema real do offline-first</p>
+</div>
+
+<div class="rodape">MedicalField · Arquiteturas de Software · Univates 2026/B</div>
+<script src="base.js"></script>
+</body></html>

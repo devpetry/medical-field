@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><title>03 · SQLite</title><link rel="stylesheet" href="base.css"></head>
+<body>
+<h1>O cliente leva o próprio banco</h1>
+<div class="sub">Um arquivo SQLite por aparelho: a cópia dos dados clínicos e as tabelas que fazem o offline funcionar</div>
+
+<div class="caixa neutro" id="servidor" style="left:560px; top:205px; width:800px; height:110px">
+  <h3>Servidor central (VM)</h3><p>clinical-service + PostgreSQL</p>
+</div>
+
+<div class="grupo" style="left:60px; top:440px; width:1800px; height:575px"><div class="nome">SQLite no aparelho · node:sqlite do Electron</div></div>
+<div class="caixa banco" id="copia" style="left:100px; top:500px; width:820px; height:490px">
+  <h3>Cópia dos dados clínicos</h3><span class="tag">mesmas tabelas do servidor</span>
+  <p><b>pessoa · prontuario · atendimento</b><br><b>sinal_vital · medicacao_administrada</b><br><b>medicamento</b><br><br>
+  cada registro tem <b>sync_status</b>: PENDENTE, SINCRONIZADO ou ERRO<br><br>
+  o pull nunca sobrescreve um registro<br>que ainda tem pendência local</p>
+</div>
+<div class="caixa cliente destaque" id="outbox" style="left:980px; top:500px; width:840px; height:125px; padding:16px 28px">
+  <h3>outbox</h3><p>fila de alterações: entidade, payload, <b>chave UUID</b>, tentativas, status</p>
+</div>
+<div class="caixa cliente" id="log" style="left:980px; top:638px; width:840px; height:108px; padding:14px 28px">
+  <h3 style="font-size:28px">local_log</h3><p>ações feitas no aparelho, enviadas depois pelo POST /log</p>
+</div>
+<div class="caixa cliente" id="sessao" style="left:980px; top:759px; width:840px; height:108px; padding:14px 28px">
+  <h3 style="font-size:28px">sessao</h3><p>último login: token e hash da senha (login offline)</p>
+</div>
+<div class="caixa cliente" id="estado" style="left:980px; top:880px; width:840px; height:110px; padding:14px 28px">
+  <h3 style="font-size:28px">sync_state</h3><p>hora do último pull e id do dispositivo</p>
+</div>
+
+<i class="seta" data-de="servidor.b.0.25" data-para="copia.t" data-reta data-rotulo="pull: GET /sync/pull" data-rotulo-pos="esquerda"></i>
+<i class="seta" data-de="outbox.t.0.3" data-para="servidor.b" data-reta data-rotulo="push: POST /sync/push" data-rotulo-pos="direita"></i>
+
+<div class="rodape">MedicalField · Arquiteturas de Software · Univates 2026/B</div>
+<script src="base.js"></script>
+</body></html>
