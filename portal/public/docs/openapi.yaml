@@ -1,0 +1,766 @@
+openapi: 3.0.3
+info:
+  title: MedicalField API
+  version: 1.0.0
+  description: |
+    Prontuário de emergência offline-first (Trabalho Final de Arquiteturas de Software, Univates 2026/B).
+
+    Todas as rotas passam pelo gateway Nginx em `/api` e são distribuídas a três serviços:
+
+    | Prefixo | Serviço | Tecnologia |
+    | --- | --- | --- |
+    | `/auth`, `/profissional` | auth-service | Node.js + Express |
+    | `/documento` | document-service | Python + FastAPI |
+    | demais rotas | clinical-service | Java 21 + Spring Boot |
+
+    **Como testar aqui:** rode `POST /auth/login`, copie o `accessToken` da resposta, clique em
+    **Authorize** e cole o token. Usuários de teste (senha `MedField@2026`): `CRM-RS 12345`,
+    `COREN-RS 5521`, `SOC-0042` (socorristas) e `CRM-RS 99999` (administrador).
+
+    Todas as rotas, exceto o login, exigem `Authorization: Bearer <token>` e respondem **401**
+    sem ele. `GET /profissional`, `GET /log` e `GET /documento/envio` são restritas ao perfil
+    **ADMIN** (403 para socorristas); o portal também só aceita administradores.
+    Toda requisição é registrada em `audit.access_log`.
+servers:
+  - url: /api
+    description: Mesmo servidor desta página (VM ou ambiente local)
+  - url: http://177.44.248.75/api
+    description: VM da Univates
+security:
+  - bearerAuth: []
+tags:
+  - name: Autenticação
+    description: auth-service (Node.js)
+  - name: Cadastros
+    description: clinical-service (Java) — medicamentos, pessoas, prontuários e atendimentos
+  - name: Sincronização
+    description: clinical-service (Java) — push da Outbox e pull de novidades
+  - name: Auditoria
+    description: clinical-service (Java) — logs de acesso e de sincronização
+  - name: Documentos
+    description: document-service (Python) — ficha em PDF e e-mail
+
+paths:
+  /auth/login:
+    post:
+      tags: [Autenticação]
+      summary: Autentica o profissional e retorna o JWT
+      description: Única rota pública. O token vale 12 horas e é aceito pelos três serviços.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/LoginRequest' }
+            example: { registro: CRM-RS 12345, tipoRegistro: CRM, senha: MedField@2026 }
+      responses:
+        '200':
+          description: Autenticado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/LoginResponse' }
+        '400': { $ref: '#/components/responses/Invalido' }
+        '401':
+          description: Registro ou senha inválidos
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Erro' }
+
+  /auth/me:
+    get:
+      tags: [Autenticação]
+      summary: Dados do profissional autenticado
+      responses:
+        '200':
+          description: Profissional do token
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Profissional' }
+        '401': { $ref: '#/components/responses/NaoAutenticado' }
+
+  /profissional:
+    get:
+      tags: [Autenticação]
+      summary: Lista os profissionais (somente ADMIN)
+      responses:
+        '200':
+          description: Profissionais ordenados por nome
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/ProfissionalCompleto' }
+        '401': { $ref: '#/components/responses/NaoAutenticado' }
+        '403': { $ref: '#/components/responses/Proibido' }
+
+  /medicamento:
+    get:
+      tags: [Cadastros]
+      summary: Obtém todos os medicamentos
+      description: Medicamentos são cadastrados apenas no servidor (via banco de dados).
+      responses:
+        '200':
+          description: Medicamentos ordenados por nome
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Medicamento' }
+        '401': { $ref: '#/components/responses/NaoAutenticado' }
+
+  /pessoa:
+    get:
+      tags: [Cadastros]
+      summary: Obtém todas as pessoas
+      responses:
+        '200':
+          description: Pessoas ordenadas por nome
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Pessoa' }
+        '401': { $ref: '#/components/responses/NaoAutenticado' }
+    post:
+      tags: [Cadastros]
+      summary: Cadastra nova pessoa
+      description: |
+        O `id` (UUID) é gerado pelo cliente. Reenviar o mesmo `id` não duplica: devolve o registro
+        existente com status 200.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/Pessoa' }
+            example:
+              id: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+              nome: Paciente Swagger
+              alergias: Dipirona
+              tipoSanguineo: O+
+      responses:
+        '201': { description: Criada, content: { application/json: { schema: { $ref: '#/components/schemas/Pessoa' } } } }
+        '200': { description: Já existia (idempotente), content: { application/json: { schema: { $ref: '#/components/schemas/Pessoa' } } } }
+        '400': { $ref: '#/components/responses/Invalido' }
+        '401': { $ref: '#/components/responses/NaoAutenticado' }
+
+  /prontuario:
+    get:
+      tags: [Cadastros]
+      summary: Obtém todos os prontuários de todas as pessoas
+      responses:
+        '200':
+          description: Prontuários, do mais recente ao mais antigo
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Prontuario' }
+        '401': { $ref: '#/components/responses/NaoAutenticado' }
+    post:
+      tags: [Cadastros]
+      summary: Cadastra um prontuário
+      description: Cada pessoa tem no máximo um prontuário. A pessoa precisa existir no servidor.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/Prontuario' }
+            example:
+              id: 9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d
+              pessoaId: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+              comorbidades: Asma
+      responses:
+        '201': { description: Criado, content: { application/json: { schema: { $ref: '#/components/schemas/Prontuario' } } } }
+        '200': { description: Já existia (idempotente), content: { application/json: { schema: { $ref: '#/components/schemas/Prontuario' } } } }
+        '400': { $ref: '#/components/responses/Invalido' }
+        '401': { $ref: '#/components/responses/NaoAutenticado' }
+        '409': { $ref: '#/components/responses/Conflito' }
+
+  /prontuario/{pessoaId}:
+    get:
+      tags: [Cadastros]
+      summary: Obtém o prontuário de uma pessoa
+      parameters:
+        - $ref: '#/components/parameters/PessoaId'
+      responses:
+        '200':
+          description: Prontuário da pessoa
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Prontuario' }
+        '401': { $ref: '#/components/responses/NaoAutenticado' }
+        '404': { $ref: '#/components/responses/NaoEncontrado' }
+
+  /atendimento:
+    get:
+      tags: [Cadastros]
+      summary: Obtém todos os atendimentos
+      responses:
+        '200':
+          description: Atendimentos, do mais recente ao mais antigo
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Atendimento' }
+        '401': { $ref: '#/components/responses/NaoAutenticado' }
+    post:
+      tags: [Cadastros]
+      summary: Cadastra um atendimento
+      description: |
+        Aplica as regras clínicas: dose acima da `doseMaxima` do medicamento ou medicamento que conflita
+        com uma alergia do paciente (sem `alertaConfirmado`) → **422**; Glasgow ou sinais vitais fora
+        das faixas → **400**.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/Atendimento' }
+            example:
+              id: 1b4e28ba-2fa1-11d2-883f-0016d3cca427
+              prontuarioId: 9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d
+              inicio: '2026-11-25T14:30:00Z'
+              local: BR-386, km 340
+              queixaPrincipal: Trauma por colisão
+              glasgow: { ocular: 3, verbal: 4, motora: 6, total: 13 }
+              triagemManchester: LARANJA
+              sinaisVitais:
+                - { id: 6ec0bd7f-11c0-43da-975e-2a8ad9ebae0b, aferidoEm: '2026-11-25T14:35:00Z', paSistolica: 130, paDiastolica: 85, fc: 98, fr: 18, spo2: 96 }
+              medicacoes:
+                - { id: 7d444840-9dc0-11d1-b245-5ffdce74fad2, medicamentoId: 1, dose: 500, unidade: mL, via: EV, administradoEm: '2026-11-25T14:40:00Z' }
+      responses:
+        '201': { description: Criado, content: { application/json: { schema: { $ref: '#/components/schemas/Atendimento' } } } }
+        '200': { description: Já existia (idempotente), content: { application/json: { schema: { $ref: '#/components/schemas/Atendimento' } } } }
+        '400': { $ref: '#/components/responses/Invalido' }
+        '401': { $ref: '#/components/responses/NaoAutenticado' }
+        '422':
+          description: Regra clínica violada (dose máxima ou alergia)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Erro' }
+              example: { erro: 'Dose de Soro fisiológico 0,9% acima do máximo (2000 mL)' }
+
+  /atendimento/{pessoaId}:
+    get:
+      tags: [Cadastros]
+      summary: Obtém todos os atendimentos de uma pessoa
+      parameters:
+        - $ref: '#/components/parameters/PessoaId'
+      responses:
+        '200':
+          description: Atendimentos da pessoa (lista vazia se ela não tem prontuário)
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Atendimento' }
+        '401': { $ref: '#/components/responses/NaoAutenticado' }
+
+  /atendimento/detalhe/{atendimentoId}:
+    get:
+      tags: [Cadastros]
+      summary: Atendimento completo, com pessoa, prontuário e medicamentos usados
+      description: Usado pelo document-service para montar a ficha.
+      parameters:
+        - $ref: '#/components/parameters/AtendimentoId'
+      responses:
+        '200':
+          description: Atendimento e dados relacionados
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AtendimentoDetalhe' }
+        '401': { $ref: '#/components/responses/NaoAutenticado' }
+        '404': { $ref: '#/components/responses/NaoEncontrado' }
+
+  /sync/push:
+    post:
+      tags: [Sincronização]
+      summary: Envia a Outbox do cliente
+      description: |
+        Cada item é aplicado numa transação própria e tem resposta própria; um item com erro não
+        impede os demais.
+
+        - **Idempotência:** a `chave` (UUID) de cada item é guardada com o hash do payload. Reenviar
+          o mesmo item devolve `DUPLICADO`.
+        - **Conflito:** se `baseVersion` difere da versão atual do servidor, a estratégia da entidade
+          decide: Pessoa/Prontuário → LastWriteWins; Atendimento → AppendOnlyMerge (une sinais vitais
+          e medicações); Medicamento → ServerWins (não aceito do cliente).
+        - Cada item gera um registro em `audit.sync_evento`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/PushRequest' }
+            example:
+              deviceId: amb-03
+              itens:
+                - outboxId: 1
+                  chave: 0f8fad5b-d9cb-469f-a165-70867728950e
+                  entidade: PESSOA
+                  operacao: CREATE
+                  baseVersion: 0
+                  payload: { id: 3fa85f64-5717-4562-b3fc-2c963f66afa6, nome: Paciente Offline, updatedAt: '2026-11-25T14:00:00Z' }
+      responses:
+        '200':
+          description: Resultado por item
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PushResponse' }
+        '400': { $ref: '#/components/responses/Invalido' }
+        '401': { $ref: '#/components/responses/NaoAutenticado' }
+
+  /sync/pull:
+    get:
+      tags: [Sincronização]
+      summary: Baixa o que mudou no servidor
+      description: Sem `since`, devolve tudo. O cliente guarda o `serverTime` da resposta para o próximo pull.
+      parameters:
+        - name: since
+          in: query
+          required: false
+          description: Data/hora ISO 8601 da última sincronização
+          schema: { type: string, format: date-time, example: '2026-11-24T00:00:00Z' }
+      responses:
+        '200':
+          description: Registros alterados desde `since`
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PullResponse' }
+        '401': { $ref: '#/components/responses/NaoAutenticado' }
+
+  /log:
+    post:
+      tags: [Auditoria]
+      summary: Envia os logs locais gerados offline
+      description: Gravados em `audit.access_log` com origem `OFFLINE` e a data/hora original.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/LogRequest' }
+            example:
+              deviceId: amb-03
+              logs:
+                - { dataHora: '2026-11-25T13:50:00Z', acao: CRIAR, entidade: pessoa, entidadeId: 3fa85f64-5717-4562-b3fc-2c963f66afa6 }
+      responses:
+        '201':
+          description: Logs recebidos
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  recebidos: { type: integer, example: 1 }
+        '400': { $ref: '#/components/responses/Invalido' }
+        '401': { $ref: '#/components/responses/NaoAutenticado' }
+    get:
+      tags: [Auditoria]
+      summary: Consulta a auditoria (somente ADMIN)
+      parameters:
+        - name: tipo
+          in: query
+          description: '`acesso` = log de requisições; `sync` = eventos de sincronização'
+          schema: { type: string, enum: [acesso, sync], default: acesso }
+        - name: limite
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 1000, default: 200 }
+      responses:
+        '200':
+          description: Registros, do mais recente ao mais antigo (formato depende de `tipo`)
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  oneOf:
+                    - $ref: '#/components/schemas/AccessLog'
+                    - $ref: '#/components/schemas/SyncEvento'
+        '401': { $ref: '#/components/responses/NaoAutenticado' }
+        '403': { $ref: '#/components/responses/Proibido' }
+
+  /documento/ficha/{atendimentoId}:
+    get:
+      tags: [Documentos]
+      summary: Gera a Ficha de Atendimento em PDF
+      parameters:
+        - $ref: '#/components/parameters/AtendimentoId'
+      responses:
+        '200':
+          description: Arquivo PDF para download
+          content:
+            application/pdf:
+              schema: { type: string, format: binary }
+        '401': { $ref: '#/components/responses/NaoAutenticado' }
+        '404': { $ref: '#/components/responses/NaoEncontrado' }
+        '422': { description: ID não é um UUID válido }
+        '502': { description: clinical-service indisponível }
+
+  /documento/ficha/{atendimentoId}/email:
+    post:
+      tags: [Documentos]
+      summary: Envia a ficha em PDF por e-mail
+      parameters:
+        - $ref: '#/components/parameters/AtendimentoId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/EnvioEmailRequest' }
+            example: { destinatario: familiar@example.com, nomeDestinatario: Maria Lima, relacao: FAMILIAR }
+      responses:
+        '202':
+          description: E-mail enviado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  envioId: { type: integer, example: 3 }
+                  status: { type: string, example: ENVIADO }
+        '401': { $ref: '#/components/responses/NaoAutenticado' }
+        '404': { $ref: '#/components/responses/NaoEncontrado' }
+        '422': { description: Corpo ou ID inválido }
+        '502': { description: Falha no envio (SMTP) ou clinical-service indisponível }
+
+  /documento/envio:
+    get:
+      tags: [Documentos]
+      summary: Histórico dos e-mails enviados (somente ADMIN)
+      responses:
+        '200':
+          description: Últimos 200 envios
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/EnvioEmail' }
+        '401': { $ref: '#/components/responses/NaoAutenticado' }
+        '403': { $ref: '#/components/responses/Proibido' }
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: '`accessToken` devolvido por `POST /auth/login`'
+
+  parameters:
+    PessoaId:
+      name: pessoaId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    AtendimentoId:
+      name: atendimentoId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+
+  responses:
+    NaoAutenticado:
+      description: Token ausente, inválido ou expirado
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Erro' }
+          example: { erro: Token ausente, inválido ou expirado }
+    Proibido:
+      description: Rota restrita ao perfil ADMIN
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Erro' }
+          example: { erro: Acesso restrito a administradores }
+    Invalido:
+      description: Dados inválidos
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Erro' }
+    NaoEncontrado:
+      description: Registro não encontrado
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Erro' }
+    Conflito:
+      description: Conflito com um registro existente
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Erro' }
+
+  schemas:
+    Erro:
+      type: object
+      properties:
+        erro: { type: string }
+
+    LoginRequest:
+      type: object
+      required: [registro, senha]
+      properties:
+        registro: { type: string, example: CRM-RS 12345 }
+        tipoRegistro: { type: string, enum: [CRM, COREN, SOCORRISTA] }
+        senha: { type: string, format: password }
+
+    LoginResponse:
+      type: object
+      properties:
+        accessToken: { type: string, description: JWT HS256 }
+        expiresIn: { type: integer, description: Validade em segundos, example: 43200 }
+        profissional: { $ref: '#/components/schemas/Profissional' }
+
+    Profissional:
+      type: object
+      properties:
+        id: { type: integer, example: 1 }
+        nome: { type: string, example: Ana Souza }
+        registro: { type: string, example: CRM-RS 12345 }
+        tipo: { type: string, enum: [CRM, COREN, SOCORRISTA] }
+        perfil: { type: string, enum: [SOCORRISTA, ADMIN] }
+
+    ProfissionalCompleto:
+      allOf:
+        - $ref: '#/components/schemas/Profissional'
+        - type: object
+          properties:
+            ativo: { type: boolean }
+            criadoEm: { type: string, format: date-time }
+
+    Medicamento:
+      type: object
+      properties:
+        id: { type: integer, example: 1 }
+        nome: { type: string, example: 'Soro fisiológico 0,9%' }
+        principioAtivo: { type: string }
+        apresentacao: { type: string }
+        doseMaxima: { type: number, example: 2000 }
+        unidade: { type: string, example: mL }
+        viaPadrao: { type: string, example: EV }
+        alertas: { type: string }
+        updatedAt: { type: string, format: date-time, readOnly: true }
+
+    Versionado:
+      type: object
+      properties:
+        version: { type: integer, readOnly: true, description: Sobe a cada alteração; base da detecção de conflito }
+        updatedAt: { type: string, format: date-time, description: Quando o profissional alterou (usado pelo LastWriteWins) }
+        sincronizadoEm: { type: string, format: date-time, readOnly: true }
+
+    Pessoa:
+      allOf:
+        - type: object
+          required: [id, nome]
+          properties:
+            id: { type: string, format: uuid, description: Gerado pelo cliente }
+            nome: { type: string }
+            cpf: { type: string }
+            dataNascimento: { type: string, format: date }
+            sexo: { type: string }
+            tipoSanguineo: { type: string, example: O+ }
+            alergias: { type: string, example: Dipirona }
+            telefone: { type: string }
+            emailContato: { type: string, format: email }
+            contatoEmergencia: { type: string }
+            updatedBy: { type: integer, readOnly: true }
+        - $ref: '#/components/schemas/Versionado'
+
+    Prontuario:
+      allOf:
+        - type: object
+          required: [id, pessoaId]
+          properties:
+            id: { type: string, format: uuid }
+            pessoaId: { type: string, format: uuid }
+            comorbidades: { type: string }
+            usoContinuo: { type: string }
+            observacoes: { type: string }
+            updatedBy: { type: integer, readOnly: true }
+        - $ref: '#/components/schemas/Versionado'
+
+    Glasgow:
+      type: object
+      description: 'Ocular 1–4, verbal 1–5, motora 1–6; `total` deve ser a soma'
+      properties:
+        ocular: { type: integer, minimum: 1, maximum: 4 }
+        verbal: { type: integer, minimum: 1, maximum: 5 }
+        motora: { type: integer, minimum: 1, maximum: 6 }
+        total: { type: integer, minimum: 3, maximum: 15 }
+
+    SinalVital:
+      type: object
+      required: [id, aferidoEm]
+      properties:
+        id: { type: string, format: uuid }
+        aferidoEm: { type: string, format: date-time }
+        paSistolica: { type: integer, minimum: 40, maximum: 300 }
+        paDiastolica: { type: integer, minimum: 20, maximum: 200 }
+        fc: { type: integer, minimum: 20, maximum: 250 }
+        fr: { type: integer, minimum: 4, maximum: 80 }
+        spo2: { type: integer, minimum: 50, maximum: 100 }
+        temperatura: { type: number, minimum: 30, maximum: 45 }
+        glicemia: { type: integer, minimum: 10, maximum: 1000 }
+
+    MedicacaoAdministrada:
+      type: object
+      required: [id, medicamentoId, dose, unidade]
+      properties:
+        id: { type: string, format: uuid }
+        medicamentoId: { type: integer }
+        dose: { type: number }
+        unidade: { type: string }
+        via: { type: string }
+        administradoEm: { type: string, format: date-time }
+        profissionalId: { type: integer, readOnly: true }
+        alertaConfirmado: { type: boolean, description: Confirma a administração apesar de alergia conhecida }
+
+    Atendimento:
+      allOf:
+        - type: object
+          required: [id, prontuarioId]
+          properties:
+            id: { type: string, format: uuid }
+            prontuarioId: { type: string, format: uuid }
+            profissionalId: { type: integer, readOnly: true }
+            deviceId: { type: string, example: amb-03 }
+            inicio: { type: string, format: date-time }
+            fim: { type: string, format: date-time }
+            local: { type: string }
+            queixaPrincipal: { type: string }
+            glasgow: { $ref: '#/components/schemas/Glasgow' }
+            triagemManchester: { type: string, description: Cor do Protocolo de Manchester, example: LARANJA }
+            triagemStart: { type: string, description: Categoria do protocolo START }
+            conduta: { type: string }
+            destino: { type: string }
+            status: { type: string }
+            criadoOffline: { type: boolean, description: Registrado sem conexão e enviado pela Outbox }
+            sinaisVitais:
+              type: array
+              items: { $ref: '#/components/schemas/SinalVital' }
+            medicacoes:
+              type: array
+              items: { $ref: '#/components/schemas/MedicacaoAdministrada' }
+        - $ref: '#/components/schemas/Versionado'
+
+    AtendimentoDetalhe:
+      type: object
+      properties:
+        atendimento: { $ref: '#/components/schemas/Atendimento' }
+        prontuario: { $ref: '#/components/schemas/Prontuario' }
+        pessoa: { $ref: '#/components/schemas/Pessoa' }
+        medicamentos:
+          type: array
+          items: { $ref: '#/components/schemas/Medicamento' }
+
+    PushItem:
+      type: object
+      required: [outboxId, entidade, payload]
+      properties:
+        outboxId: { type: integer, description: Posição na Outbox do cliente }
+        chave: { type: string, format: uuid, description: 'Chave de idempotência (sem ela, usa `deviceId:outboxId`)' }
+        entidade: { type: string, enum: [PESSOA, PRONTUARIO, ATENDIMENTO, MEDICAMENTO] }
+        operacao: { type: string, enum: [CREATE, UPDATE] }
+        baseVersion: { type: integer, description: Versão que o cliente conhecia ao alterar }
+        payload: { type: object, description: 'Pessoa, Prontuario ou Atendimento, com `id` UUID' }
+
+    PushRequest:
+      type: object
+      required: [deviceId, itens]
+      properties:
+        deviceId: { type: string, example: amb-03 }
+        itens:
+          type: array
+          items: { $ref: '#/components/schemas/PushItem' }
+
+    ItemResultado:
+      type: object
+      properties:
+        outboxId: { type: integer }
+        status: { type: string, enum: [APLICADO, DUPLICADO, CONFLITO_RESOLVIDO, ERRO] }
+        vencedor: { type: string, enum: [CLIENTE, SERVIDOR, MESCLA], description: Só em CONFLITO_RESOLVIDO }
+        versao: { type: integer, description: Nova versão do registro no servidor }
+        mensagem: { type: string, description: Só em ERRO }
+
+    PushResponse:
+      type: object
+      properties:
+        resultados:
+          type: array
+          items: { $ref: '#/components/schemas/ItemResultado' }
+        serverTime: { type: string, format: date-time }
+
+    PullResponse:
+      type: object
+      properties:
+        medicamentos: { type: array, items: { $ref: '#/components/schemas/Medicamento' } }
+        pessoas: { type: array, items: { $ref: '#/components/schemas/Pessoa' } }
+        prontuarios: { type: array, items: { $ref: '#/components/schemas/Prontuario' } }
+        atendimentos: { type: array, items: { $ref: '#/components/schemas/Atendimento' } }
+        serverTime: { type: string, format: date-time }
+
+    LogRequest:
+      type: object
+      properties:
+        deviceId: { type: string }
+        logs:
+          type: array
+          items:
+            type: object
+            required: [dataHora, acao]
+            properties:
+              dataHora: { type: string, format: date-time }
+              acao: { type: string, example: CRIAR }
+              entidade: { type: string }
+              entidadeId: { type: string }
+              profissionalId: { type: integer, description: Padrão = profissional do token }
+
+    AccessLog:
+      type: object
+      properties:
+        id: { type: integer }
+        data_hora: { type: string, format: date-time }
+        servico: { type: string, enum: [auth, clinical, document, cliente] }
+        ip_cliente: { type: string }
+        profissional_id: { type: integer }
+        metodo: { type: string }
+        rota: { type: string }
+        status_code: { type: integer }
+        tempo_ms: { type: integer }
+        origem: { type: string, enum: [ONLINE, OFFLINE] }
+        device_id: { type: string }
+
+    SyncEvento:
+      type: object
+      properties:
+        id: { type: integer }
+        data_hora: { type: string, format: date-time }
+        device_id: { type: string }
+        profissional_id: { type: integer }
+        entidade: { type: string }
+        entidade_id: { type: string }
+        operacao: { type: string }
+        status: { type: string }
+        versao_cliente: { type: integer }
+        versao_servidor: { type: integer }
+        estrategia: { type: string, enum: [LastWriteWins, AppendOnlyMerge, ServerWins] }
+        vencedor: { type: string }
+        antes: { type: string, description: JSON do registro antes }
+        depois: { type: string, description: JSON do registro depois }
+
+    EnvioEmailRequest:
+      type: object
+      required: [destinatario, relacao]
+      properties:
+        destinatario: { type: string, format: email }
+        nomeDestinatario: { type: string }
+        relacao: { type: string, enum: [PACIENTE, FAMILIAR] }
+
+    EnvioEmail:
+      type: object
+      properties:
+        id: { type: integer }
+        atendimentoId: { type: string, format: uuid }
+        destinatario: { type: string }
+        nomeDestinatario: { type: string }
+        relacao: { type: string, enum: [PACIENTE, FAMILIAR] }
+        status: { type: string, enum: [ENVIADO, ERRO] }
+        erro: { type: string }
+        enviadoEm: { type: string, format: date-time }
+        profissionalId: { type: integer }

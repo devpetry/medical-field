@@ -1,0 +1,15 @@
+[Unit]
+Description=MedicalField document-service (Python / FastAPI)
+After=network.target postgresql.service medicalfield-clinical.service
+Wants=postgresql.service
+
+[Service]
+User=medicalfield
+WorkingDirectory=/opt/medicalfield/document
+EnvironmentFile=/opt/medicalfield/document/.env
+ExecStart=/opt/medicalfield/document/.venv/bin/python run.py
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

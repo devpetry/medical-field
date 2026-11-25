@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MedicalField · API</title>
+  <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5.17.14/swagger-ui.css" />
+  <style>body { margin: 0; background: #fff; }</style>
+</head>
+<body>
+  <div id="swagger"></div>
+  <script src="https://unpkg.com/swagger-ui-dist@5.17.14/swagger-ui-bundle.js"></script>
+  <script>
+    // Mesma origem do gateway: o "Try it out" chama /api direto, sem CORS.
+    window.ui = SwaggerUIBundle({
+      url: 'openapi.yaml',
+      dom_id: '#swagger',
+      deepLinking: true,
+      persistAuthorization: true,
+      tryItOutEnabled: true,
+    });
+  </script>
+</body>
+</html>

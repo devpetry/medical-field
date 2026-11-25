@@ -1,0 +1,20 @@
+node_modules/
+dist/
+dist-*/
+target/
+build/
+__pycache__/
+.venv/
+*.pyc
+.env
+*.log
+video/build/
+client/data/
+services/document-service/emails/
+dekit.yaml
+client-vm.sqlite*
+
+# Ferramentas locais
+.idea/
+.claude/
+*.tsbuildinfo

@@ -1,0 +1,998 @@
+{
+  "info": {
+    "name": "MedicalField",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Rotas do MedicalField via Nginx. Rode 'POST /auth/login' primeiro: o token fica em {{token}}."
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://127.0.0.1/api"
+    },
+    {
+      "key": "senha",
+      "value": "MedField@2026"
+    },
+    {
+      "key": "deviceId",
+      "value": "postman"
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "tokenAdmin",
+      "value": ""
+    },
+    {
+      "key": "pessoaId",
+      "value": ""
+    },
+    {
+      "key": "prontuarioId",
+      "value": ""
+    },
+    {
+      "key": "atendimentoId",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "auth-service (Node.js)",
+      "item": [
+        {
+          "name": "POST /auth/login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Device-Id",
+                "value": "{{deviceId}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"registro\": \"CRM-RS 12345\",\n  \"tipoRegistro\": \"CRM\",\n  \"senha\": \"{{senha}}\"\n}"
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "description": "Única rota pública. Guarda o token e gera os UUIDs usados nos POST seguintes."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200', () => pm.response.to.have.status(200));",
+                  "pm.collectionVariables.set('token', pm.response.json().accessToken);",
+                  "pm.collectionVariables.set('pessoaId', pm.variables.replaceIn('{{$randomUUID}}'));",
+                  "pm.collectionVariables.set('prontuarioId', pm.variables.replaceIn('{{$randomUUID}}'));",
+                  "pm.collectionVariables.set('atendimentoId', pm.variables.replaceIn('{{$randomUUID}}'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /auth/login (admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Device-Id",
+                "value": "{{deviceId}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"registro\": \"CRM-RS 99999\",\n  \"tipoRegistro\": \"CRM\",\n  \"senha\": \"{{senha}}\"\n}"
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "description": "Única rota pública. Guarda o token e gera os UUIDs usados nos POST seguintes."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200', () => pm.response.to.have.status(200));",
+                  "pm.collectionVariables.set('tokenAdmin', pm.response.json().accessToken);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /auth/me",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Device-Id",
+                "value": "{{deviceId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "me"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /profissional",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Device-Id",
+                "value": "{{deviceId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/profissional",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "profissional"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAdmin}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "Rota restrita ao perfil ADMIN: usa o token do login admin."
+          }
+        },
+        {
+          "name": "Sem token deve dar 401",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Device-Id",
+                "value": "{{deviceId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/pessoa",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "pessoa"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('401', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Socorrista em rota de admin deve dar 403",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('403', () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/profissional",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "profissional"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "clinical-service (Java)",
+      "item": [
+        {
+          "name": "GET /medicamento",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Device-Id",
+                "value": "{{deviceId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/medicamento",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "medicamento"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /pessoa",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Device-Id",
+                "value": "{{deviceId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/pessoa",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "pessoa"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /pessoa",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Device-Id",
+                "value": "{{deviceId}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/pessoa",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "pessoa"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"{{pessoaId}}\",\n  \"nome\": \"Paciente Postman\",\n  \"alergias\": \"Dipirona\",\n  \"tipoSanguineo\": \"O+\"\n}"
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 ou 200 (idempotente)', () => pm.expect(pm.response.code).to.be.oneOf([200, 201]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /prontuario",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Device-Id",
+                "value": "{{deviceId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/prontuario",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "prontuario"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /prontuario",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Device-Id",
+                "value": "{{deviceId}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/prontuario",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "prontuario"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"{{prontuarioId}}\",\n  \"pessoaId\": \"{{pessoaId}}\",\n  \"comorbidades\": \"Asma\"\n}"
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /prontuario/{pessoaId}",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Device-Id",
+                "value": "{{deviceId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/prontuario/{{pessoaId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "prontuario",
+                "{{pessoaId}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /atendimento",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Device-Id",
+                "value": "{{deviceId}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/atendimento",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "atendimento"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"{{atendimentoId}}\",\n  \"prontuarioId\": \"{{prontuarioId}}\",\n  \"local\": \"BR-386, km 340\",\n  \"queixaPrincipal\": \"Trauma por colisão\",\n  \"glasgow\": {\n    \"ocular\": 3,\n    \"verbal\": 4,\n    \"motora\": 6\n  },\n  \"triagemManchester\": \"LARANJA\",\n  \"triagemStart\": \"AMARELO\",\n  \"sinaisVitais\": [\n    {\n      \"id\": \"{{$randomUUID}}\",\n      \"aferidoEm\": \"{{$isoTimestamp}}\",\n      \"paSistolica\": 100,\n      \"paDiastolica\": 60,\n      \"fc\": 118,\n      \"fr\": 24,\n      \"spo2\": 93,\n      \"temperatura\": 36.4,\n      \"glicemia\": 110\n    }\n  ],\n  \"medicacoes\": [\n    {\n      \"id\": \"{{$randomUUID}}\",\n      \"medicamentoId\": 1,\n      \"dose\": 1000,\n      \"unidade\": \"mL\",\n      \"via\": \"EV\",\n      \"administradoEm\": \"{{$isoTimestamp}}\"\n    }\n  ]\n}"
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /atendimento — dose acima do máximo (422)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Device-Id",
+                "value": "{{deviceId}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/atendimento",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "atendimento"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"{{$randomUUID}}\",\n  \"prontuarioId\": \"{{prontuarioId}}\",\n  \"medicacoes\": [\n    {\n      \"id\": \"{{$randomUUID}}\",\n      \"medicamentoId\": 1,\n      \"dose\": 5000,\n      \"unidade\": \"mL\",\n      \"administradoEm\": \"{{$isoTimestamp}}\"\n    }\n  ]\n}"
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('422', () => pm.response.to.have.status(422));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /atendimento",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Device-Id",
+                "value": "{{deviceId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/atendimento",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "atendimento"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /atendimento/{pessoaId}",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Device-Id",
+                "value": "{{deviceId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/atendimento/{{pessoaId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "atendimento",
+                "{{pessoaId}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /atendimento/detalhe/{atendimentoId}",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Device-Id",
+                "value": "{{deviceId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/atendimento/detalhe/{{atendimentoId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "atendimento",
+                "detalhe",
+                "{{atendimentoId}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /sync/push",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Device-Id",
+                "value": "{{deviceId}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/sync/push",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "sync",
+                "push"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"deviceId\": \"postman\",\n  \"itens\": [\n    {\n      \"outboxId\": 1,\n      \"entidade\": \"PESSOA\",\n      \"operacao\": \"UPDATE\",\n      \"baseVersion\": 1,\n      \"payload\": {\n        \"id\": \"{{pessoaId}}\",\n        \"nome\": \"Paciente Postman (editado)\",\n        \"alergias\": \"Dipirona\",\n        \"updatedAt\": \"{{$isoTimestamp}}\"\n      }\n    }\n  ]\n}"
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "Reenvie a mesma requisição: o item volta como DUPLICADO."
+          }
+        },
+        {
+          "name": "GET /sync/pull",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Device-Id",
+                "value": "{{deviceId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/sync/pull?since=2026-01-01T00:00:00Z",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "sync",
+                "pull"
+              ],
+              "query": [
+                {
+                  "key": "since",
+                  "value": "2026-01-01T00:00:00Z"
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /log",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Device-Id",
+                "value": "{{deviceId}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/log",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "log"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"deviceId\": \"postman\",\n  \"logs\": [\n    {\n      \"dataHora\": \"{{$isoTimestamp}}\",\n      \"acao\": \"CRIAR\",\n      \"entidade\": \"pessoa\",\n      \"entidadeId\": \"{{pessoaId}}\"\n    }\n  ]\n}"
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /log (acessos)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Device-Id",
+                "value": "{{deviceId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/log?tipo=acesso&limite=50",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "log"
+              ],
+              "query": [
+                {
+                  "key": "tipo",
+                  "value": "acesso"
+                },
+                {
+                  "key": "limite",
+                  "value": "50"
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAdmin}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "Rota restrita ao perfil ADMIN: usa o token do login admin."
+          }
+        },
+        {
+          "name": "GET /log (sincronização)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Device-Id",
+                "value": "{{deviceId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/log?tipo=sync&limite=50",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "log"
+              ],
+              "query": [
+                {
+                  "key": "tipo",
+                  "value": "sync"
+                },
+                {
+                  "key": "limite",
+                  "value": "50"
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAdmin}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "Rota restrita ao perfil ADMIN: usa o token do login admin."
+          }
+        }
+      ]
+    },
+    {
+      "name": "document-service (Python)",
+      "item": [
+        {
+          "name": "GET /documento/ficha/{atendimentoId} (PDF)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Device-Id",
+                "value": "{{deviceId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/documento/ficha/{{atendimentoId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "documento",
+                "ficha",
+                "{{atendimentoId}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /documento/ficha/{atendimentoId}/email",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Device-Id",
+                "value": "{{deviceId}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/documento/ficha/{{atendimentoId}}/email",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "documento",
+                "ficha",
+                "{{atendimentoId}}",
+                "email"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"destinatario\": \"familiar@example.com\",\n  \"nomeDestinatario\": \"Maria Lima\",\n  \"relacao\": \"FAMILIAR\"\n}"
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /documento/envio",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Device-Id",
+                "value": "{{deviceId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/documento/envio",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "documento",
+                "envio"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAdmin}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "Rota restrita ao perfil ADMIN: usa o token do login admin."
+          }
+        }
+      ]
+    }
+  ]
+}

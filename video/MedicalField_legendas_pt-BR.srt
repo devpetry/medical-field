@@ -1,0 +1,343 @@
+1
+00:00:00,900 --> 00:00:03,419
+Em uma emergência, cada segundo conta.
+
+2
+00:00:03,869 --> 00:00:13,099
+Equipes do SAMU, de rodovias e de resgate em desastres atendem pacientes em
+locais onde a internet é instável, lenta ou simplesmente não existe.
+
+3
+00:00:13,549 --> 00:00:19,761
+Mesmo assim, sinais vitais, nível de consciência, triagem e medicamentos precisam
+ser registrados na hora.
+
+4
+00:00:20,211 --> 00:00:23,206
+A falta de conexão não pode impedir esse registro.
+
+5
+00:00:23,656 --> 00:00:30,053
+Para resolver esse problema, nasceu o MedicalField: um prontuário eletrônico de
+emergência com arquitetura offline-first.
+
+6
+00:00:30,503 --> 00:00:37,829
+O profissional registra tudo no próprio dispositivo, e os dados são sincronizados
+com o servidor central assim que a conexão retorna.
+
+7
+00:00:39,829 --> 00:00:41,640
+Vamos conhecer a arquitetura.
+
+8
+00:00:42,090 --> 00:00:47,477
+Na ambulância fica o cliente desktop, construído com Electron, React e TypeScript.
+
+9
+00:00:47,927 --> 00:00:52,896
+Ele guarda os dados num banco local SQLite, embarcado no próprio dispositivo.
+
+10
+00:00:53,346 --> 00:00:57,990
+Do outro lado, na máquina virtual da Univates, fica toda a parte do servidor.
+
+11
+00:00:58,440 --> 00:01:04,698
+A porta de entrada é o Nginx, que atua como API Gateway e encaminha cada
+requisição para o serviço certo.
+
+12
+00:01:05,148 --> 00:01:10,094
+O auth-service, em Node.js, cuida do login e da emissão dos tokens.
+
+13
+00:01:10,544 --> 00:01:18,125
+O clinical-service, em Java com Spring Boot, é o núcleo: pessoas, prontuários,
+atendimentos, sincronização e logs.
+
+14
+00:01:18,575 --> 00:01:24,171
+O document-service, em Python com FastAPI, gera a ficha em PDF e envia o e-mail.
+
+15
+00:01:24,621 --> 00:01:29,381
+Os três serviços gravam no banco central PostgreSQL, cada um no seu próprio
+schema.
+
+16
+00:01:29,831 --> 00:01:35,079
+O document-service também se comunica com um servidor SMTP para enviar os
+e-mails.
+
+17
+00:01:35,529 --> 00:01:42,054
+Já o portal administrativo, feito com React, Vite e TypeScript, é servido pelo próprio
+Nginx.
+
+18
+00:01:42,504 --> 00:01:46,254
+Resumindo: SQLite no cliente, PostgreSQL no servidor.
+
+19
+00:01:48,254 --> 00:01:50,007
+Tudo começa pelo login.
+
+20
+00:01:50,457 --> 00:01:56,784
+O profissional informa seu registro, que pode ser CRM, COREN ou ID de socorrista,
+e sua senha.
+
+21
+00:01:57,234 --> 00:02:04,096
+O auth-service confere o hash da senha e devolve um token JWT, válido por doze
+horas, o tempo de um plantão.
+
+22
+00:02:04,546 --> 00:02:08,586
+O cliente guarda esse token e um hash da senha no SQLite.
+
+23
+00:02:09,036 --> 00:02:16,606
+A partir daí, cada requisição leva o token, e os outros serviços validam a assinatura
+localmente, sem consultar o auth-service.
+
+24
+00:02:17,056 --> 00:02:22,896
+Sem token, ou com token inválido, a resposta é 401: acesso negado.
+
+25
+00:02:23,346 --> 00:02:31,090
+E se não houver internet? O login local confere o hash guardado no dispositivo, e o
+token é renovado quando a conexão voltar.
+
+26
+00:02:31,540 --> 00:02:35,046
+Além disso, todos os serviços têm um middleware de auditoria.
+
+27
+00:02:35,496 --> 00:02:43,576
+Cada requisição registra data e hora, IP, profissional, método, rota, status e tempo
+de resposta, na tabela audit.access_log.
+
+28
+00:02:45,576 --> 00:02:49,048
+Agora, vamos acompanhar um atendimento dentro da ambulância.
+
+29
+00:02:49,498 --> 00:02:53,921
+Primeiro, o profissional identifica o paciente, ou cadastra uma nova pessoa.
+
+30
+00:02:54,371 --> 00:02:57,517
+Em seguida, consulta o prontuário, ou cria um novo.
+
+31
+00:02:57,967 --> 00:02:59,906
+Então abre um novo atendimento.
+
+32
+00:03:00,356 --> 00:03:07,601
+Registra os sinais vitais: pressão arterial, frequência cardíaca e respiratória,
+saturação, temperatura e glicemia.
+
+33
+00:03:08,051 --> 00:03:14,460
+Preenche a Escala de Glasgow: abertura ocular, resposta verbal e resposta motora,
+somando de três a quinze.
+
+34
+00:03:14,910 --> 00:03:18,578
+Classifica a triagem pelos protocolos Manchester e START.
+
+35
+00:03:19,028 --> 00:03:25,878
+E registra a conduta e os medicamentos administrados, conferindo a dose com a
+dose máxima do medicamento cadastrado.
+
+36
+00:03:26,328 --> 00:03:34,560
+Cada informação é gravada primeiro no SQLite do dispositivo. Esteja online ou
+offline, o fluxo na tela é exatamente o mesmo.
+
+37
+00:03:36,560 --> 00:03:40,565
+Esta é a parte mais importante: o funcionamento offline-first.
+
+38
+00:03:41,015 --> 00:03:44,034
+Imagine que a ambulância entra em uma área sem sinal.
+
+39
+00:03:44,484 --> 00:03:49,476
+O indicador muda para OFFLINE. Mas o profissional continua trabalhando
+normalmente.
+
+40
+00:03:49,926 --> 00:03:57,356
+Cada registro é salvo no SQLite e, na mesma transação, gera um item na Outbox, a
+fila do que ainda não chegou ao servidor.
+
+41
+00:03:57,806 --> 00:04:00,825
+As ações também ficam registradas no log local.
+
+42
+00:04:01,275 --> 00:04:05,733
+O contador de pendências aumenta: uma pessoa, um prontuário, um atendimento.
+
+43
+00:04:06,183 --> 00:04:09,504
+Nenhum atendimento depende do servidor para ser registrado.
+
+44
+00:04:09,954 --> 00:04:14,307
+Algum tempo depois, a ambulância chega ao hospital, e a conexão volta.
+
+45
+00:04:14,757 --> 00:04:21,015
+O indicador muda para ONLINE. O ConnectivityMonitor avisa o SyncService,
+seguindo o padrão Observer.
+
+46
+00:04:21,465 --> 00:04:28,478
+Começa o push: a Outbox é enviada em lotes, na ordem certa: pessoa, depois
+prontuário, depois atendimento.
+
+47
+00:04:28,928 --> 00:04:32,515
+O servidor processa cada item e responde com a confirmação.
+
+48
+00:04:32,965 --> 00:04:37,632
+Os registros passam para SINCRONIZADO, e o contador de pendências volta a zero.
+
+49
+00:04:38,082 --> 00:04:41,333
+Os logs locais seguem para o servidor pela rota POST /log.
+
+50
+00:04:41,783 --> 00:04:50,549
+Depois vem o pull: o cliente pergunta o que mudou desde a última sincronização e
+recebe as novidades, como novos medicamentos e dados de apoio.
+
+51
+00:04:50,999 --> 00:04:54,737
+Push envia o que está no dispositivo. Pull traz o que está no servidor.
+
+52
+00:04:56,737 --> 00:05:01,811
+Mas e se a conexão cair no meio do envio? Os dados não podem ser duplicados.
+
+53
+00:05:02,261 --> 00:05:10,655
+Por isso, cada registro nasce com um UUID gerado no próprio dispositivo. O
+mesmo registro tem o mesmo identificador no cliente e no servidor.
+
+54
+00:05:11,105 --> 00:05:18,140
+Cada item da Outbox também carrega uma chave de idempotência, formada pelo
+ID do item e pelo ID do dispositivo.
+
+55
+00:05:18,590 --> 00:05:25,336
+Se o mesmo item chegar duas vezes, o servidor reconhece a chave e responde
+DUPLICADO, sem gravar nada de novo.
+
+56
+00:05:25,786 --> 00:05:32,728
+E quando o servidor já tem uma versão mais nova do registro? Aí entra a resolução
+de conflitos, com o padrão Strategy.
+
+57
+00:05:33,178 --> 00:05:40,493
+Na LastWriteWinsStrategy, usada para pessoa e prontuário, vence a alteração mais
+recente feita pelo profissional.
+
+58
+00:05:40,943 --> 00:05:48,222
+Na AppendOnlyMergeStrategy, usada para sinais vitais e medicações, as listas são
+unidas. Nada é apagado.
+
+59
+00:05:48,672 --> 00:05:53,711
+E na ServerWinsStrategy, usada para medicamentos, prevalece o cadastro do
+servidor.
+
+60
+00:05:54,161 --> 00:06:02,776
+Cada decisão é gravada na tabela audit.sync_evento, com os dados de antes, os de
+depois e a estratégia usada. Tudo pode ser auditado.
+
+61
+00:06:04,776 --> 00:06:09,617
+No portal administrativo, o profissional faz login e consulta as informações.
+
+62
+00:06:10,067 --> 00:06:16,394
+Os profissionais cadastrados, as pessoas atendidas, os prontuários, os
+atendimentos e os registros de auditoria.
+
+63
+00:06:16,844 --> 00:06:20,931
+Enquanto o cliente estava offline, o atendimento novo não aparecia no portal.
+
+64
+00:06:21,381 --> 00:06:26,141
+Depois da sincronização, ele surge na lista, marcado como criado offline.
+
+65
+00:06:28,141 --> 00:06:30,243
+Por fim, a Ficha de Atendimento.
+
+66
+00:06:30,693 --> 00:06:34,535
+O profissional seleciona um atendimento e pede a ficha em PDF.
+
+67
+00:06:34,985 --> 00:06:42,369
+O document-service recebe a solicitação e busca os dados do atendimento no
+clinical-service, repassando o token do usuário.
+
+68
+00:06:42,819 --> 00:06:49,611
+Com os dados em mãos, gera o PDF com o paciente, os sinais vitais, o Glasgow, a
+triagem e as medicações.
+
+69
+00:06:50,061 --> 00:06:52,627
+O arquivo fica disponível para download.
+
+70
+00:06:53,077 --> 00:07:01,401
+E também pode ser enviado por e-mail ao paciente ou a um familiar. O envio passa
+pelo servidor SMTP e fica registrado no histórico.
+
+71
+00:07:03,401 --> 00:07:05,213
+Esse é o MedicalField.
+
+72
+00:07:05,663 --> 00:07:08,530
+O atendimento continua mesmo sem internet.
+
+73
+00:07:08,980 --> 00:07:12,962
+Os dados ficam no dispositivo e sincronizam automaticamente.
+
+74
+00:07:13,412 --> 00:07:17,882
+As informações clínicas ficam organizadas, seguras e rastreáveis.
+
+75
+00:07:18,332 --> 00:07:22,907
+A arquitetura é baseada em microsserviços, em três linguagens diferentes.
+
+76
+00:07:23,357 --> 00:07:27,722
+E a ficha de atendimento pode ser gerada e compartilhada em poucos cliques.
+
+77
+00:07:28,172 --> 00:07:34,987
+MedicalField: tecnologia, confiabilidade e continuidade no atendimento de
+emergência, mesmo onde a conexão não chega.

@@ -1,0 +1,16 @@
+[Unit]
+Description=MedicalField clinical-service (Java / Spring Boot)
+After=network.target postgresql.service
+Wants=postgresql.service
+
+[Service]
+User=medicalfield
+WorkingDirectory=/opt/medicalfield/clinical
+EnvironmentFile=/opt/medicalfield/clinical/.env
+ExecStart=/usr/bin/java -Xms128m -Xmx384m -jar /opt/medicalfield/clinical/clinical-service.jar
+Restart=on-failure
+RestartSec=3
+SuccessExitStatus=143
+
+[Install]
+WantedBy=multi-user.target
