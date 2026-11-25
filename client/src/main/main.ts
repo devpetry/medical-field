@@ -3,8 +3,14 @@ import { writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { MedicalFieldCore } from './core';
 
-// API_URL: endereço do Nginx na VM (ex.: http://10.0.0.10/api).
-const API_URL = process.env.API_URL ?? 'http://127.0.0.1/api';
+// Endereço do Nginx e nome do dispositivo: --api=URL e --dispositivo=NOME na linha de comando,
+// ou API_URL e DEVICE_ID no ambiente. O executável empacotado aponta para a VM da Univates por padrão,
+// para abrir com dois cliques no PC do laboratório.
+const VM_UNIVATES = 'http://177.44.248.75/api';
+const argumento = (nome: string) =>
+  process.argv.find((a) => a.startsWith(`--${nome}=`))?.slice(nome.length + 3) || undefined;
+const API_URL = argumento('api') ?? process.env.API_URL ?? (app.isPackaged ? VM_UNIVATES : 'http://127.0.0.1/api');
+const DEVICE_ID = argumento('dispositivo') ?? process.env.DEVICE_ID;
 let core: MedicalFieldCore;
 let janela: BrowserWindow | null = null;
 
@@ -39,7 +45,7 @@ app.whenReady().then(() => {
   core = new MedicalFieldCore({
     arquivoBanco: process.env.MF_DB ?? path.join(app.getPath('userData'), 'medicalfield.db'),
     apiUrl: API_URL,
-    deviceId: process.env.DEVICE_ID,
+    deviceId: DEVICE_ID,
   });
   core.aoMudarEstado((e) => janela?.webContents.send('mf:estado', e));
 

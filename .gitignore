@@ -18,3 +18,4 @@ client-vm.sqlite*
 .idea/
 .claude/
 *.tsbuildinfo
+client/release/

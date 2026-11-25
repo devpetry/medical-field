@@ -69,6 +69,8 @@ Pré-requisitos: Java 21 + Maven, Node.js 20+, Python 3.12, PostgreSQL 16 (ou Do
 
    Variáveis opcionais: `DEVICE_ID` (identificação do dispositivo, ex. `amb-03`) e `MF_DB` (arquivo do SQLite).
 
+7. **Executável do cliente** (para o PC do laboratório): o GitHub Actions gera um `.exe` portátil para Windows a cada push na `main` que mexa no `client/` (aba *Actions* → *Cliente para Windows* → artefato `MedicalField-windows`), e o anexa à página *Releases* numa tag `v*`. Ele roda sem instalar e já aponta para a VM (`http://177.44.248.75/api`). Para outro servidor ou outro nome de dispositivo: `MedicalField-1.0.0-portatil.exe --api=http://<ip>/api --dispositivo=amb-03`. No Linux: `cd client && npm run appimage` gera `release/MedicalField-1.0.0.AppImage`.
+
 No `document-service`, `EMAIL_ADAPTER=file` grava os e-mails como `.eml` em `EMAIL_DIR`, útil sem servidor SMTP. Na apresentação use `EMAIL_ADAPTER=smtp` com Mailtrap ou Gmail (senha de app).
 
 ## Implantação na VM da Univates

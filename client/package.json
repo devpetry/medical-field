@@ -9,7 +9,9 @@
     "build:renderer": "tsc -p tsconfig.renderer.json && vite build",
     "build": "npm run build:main && npm run build:renderer",
     "start": "electron .",
-    "dev": "npm run build && electron ."
+    "dev": "npm run build && electron .",
+    "exe": "npm run build && electron-builder --win portable --publish never",
+    "appimage": "npm run build && electron-builder --linux AppImage --publish never"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3"
@@ -21,9 +23,45 @@
     "@types/react-dom": "^18.3.1",
     "@vitejs/plugin-react": "^4.3.4",
     "electron": "37.10.3",
+    "electron-builder": "^25.1.8",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "typescript": "~5.6.3",
     "vite": "^5.4.11"
+  },
+  "author": "devpetry",
+  "build": {
+    "appId": "br.univates.medicalfield.cliente",
+    "productName": "MedicalField",
+    "copyright": "Univates 2026/B",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist-main/**",
+      "dist-renderer/**",
+      "package.json"
+    ],
+    "asar": true,
+    "publish": null,
+    "win": {
+      "target": [
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "portable": {
+      "artifactName": "MedicalField-${version}-portatil.exe"
+    },
+    "linux": {
+      "target": "AppImage",
+      "category": "Utility",
+      "executableName": "medicalfield",
+      "artifactName": "MedicalField-${version}.AppImage"
+    }
   }
 }
