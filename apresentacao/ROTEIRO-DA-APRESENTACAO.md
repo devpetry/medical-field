@@ -62,7 +62,7 @@ cd ~/medical-field && ./deploy/verificar.sh http://127.0.0.1
 
 Tem que terminar em **Tudo certo**. São 18 checagens: portal, Swagger, 401 sem token, logins, rotas dos três serviços, 403 de perfil e o PDF.
 
-Se alguma falhar, veja a seção 9. Para ver só se os serviços estão rodando:
+Se alguma falhar, veja a seção 11. Para ver só se os serviços estão rodando:
 
 ```bash
 systemctl is-active medicalfield-clinical medicalfield-auth medicalfield-document nginx postgresql
@@ -112,12 +112,13 @@ rm -f ~/.config/medicalfield-client/medicalfield.db*
 
 ## 7. Abrir as abas do navegador
 
-No navegador do PC, abra quatro abas:
+No navegador do PC, abra estas abas:
 
 1. **Portal:** http://177.44.248.75 (ainda não entre)
 2. **Swagger:** http://177.44.248.75/docs/
 3. **Mailtrap:** https://mailtrap.io → entre com a sua conta → **Email Testing** → **Inboxes** → **MedicalField**
 4. Esta página do roteiro, para consulta
+5. Os links do código da seção 9 (padrões de projeto)
 
 Organize a tela: navegador de um lado, cliente do outro, e o terminal da VM à mão.
 
@@ -229,7 +230,25 @@ Deve responder `INSERT 0 1`. Saia do banco com `\q`.
 
 ---
 
-## 9. Extras, se sobrar tempo
+## 9. Padrões de projeto no código
+
+O professor pede para explicar os padrões **e mostrar onde estão no código**. Abra os links abaixo em abas antes de começar (cada um já cai na linha certa) e siga esta ordem, que conta uma história: gravar → fila → rede volta → enviar → resolver conflito.
+
+| # | Padrão | Abrir | Falar |
+| --- | --- | --- | --- |
+| 1 | **Repository** *(sugerido)* | [repositories.ts:8](https://github.com/devpetry/medical-field/blob/main/client/src/main/repositories.ts#L8) (comentário) e [PessoaRepository:16](https://github.com/devpetry/medical-field/blob/main/client/src/main/repositories.ts#L16) | "Todo SQL do cliente fica aqui. A tela e o SyncService só chamam métodos como gravar e listar; se o banco local mudasse, só este arquivo mudaria." |
+| 2 | **Transactional Outbox** | [OutboxRepository:188](https://github.com/devpetry/medical-field/blob/main/client/src/main/repositories.ts#L188) e o [INSERT INTO outbox:202](https://github.com/devpetry/medical-field/blob/main/client/src/main/repositories.ts#L202) | "Toda alteração vira um item na fila, com uma chave UUID, na mesma transação do registro. É o que garante que nada se perde sem rede." |
+| 3 | **Observer** *(sugerido)* | [ConnectivityMonitor:9](https://github.com/devpetry/medical-field/blob/main/client/src/main/connectivity.ts#L9), [inscrever:22](https://github.com/devpetry/medical-field/blob/main/client/src/main/connectivity.ts#L22) e [core.ts:68:68](https://github.com/devpetry/medical-field/blob/main/client/src/main/core.ts#L68) | "Quem quer saber da conexão se inscreve. O SyncService é um inscrito: quando a chave volta a Online, ele é avisado e esvazia a fila sozinho." |
+| 4 | **Strategy** *(sugerido)* | [MergeStrategy:6](https://github.com/devpetry/medical-field/blob/main/services/clinical-service/src/main/java/br/univates/medicalfield/clinical/sync/MergeStrategy.java#L6) e as três implementações: [LastWriteWins:10](https://github.com/devpetry/medical-field/blob/main/services/clinical-service/src/main/java/br/univates/medicalfield/clinical/sync/LastWriteWinsStrategy.java#L10), [AppendOnlyMerge:18](https://github.com/devpetry/medical-field/blob/main/services/clinical-service/src/main/java/br/univates/medicalfield/clinical/sync/AppendOnlyMergeStrategy.java#L18), [ServerWins:8](https://github.com/devpetry/medical-field/blob/main/services/clinical-service/src/main/java/br/univates/medicalfield/clinical/sync/ServerWinsStrategy.java#L8) | "Uma interface, três regras de conflito. O AppendOnly une as listas de sinais vitais e medicações: nenhum registro clínico se perde." |
+| 5 | **Factory** | [MergeStrategyFactory.para():20](https://github.com/devpetry/medical-field/blob/main/services/clinical-service/src/main/java/br/univates/medicalfield/clinical/sync/MergeStrategyFactory.java#L20) e o uso em [SyncService.java:128:128](https://github.com/devpetry/medical-field/blob/main/services/clinical-service/src/main/java/br/univates/medicalfield/clinical/sync/SyncService.java#L128) | "Pessoa e prontuário → LastWriteWins; atendimento → AppendOnly; medicamento → ServerWins. O SyncService não sabe qual regra usa: pede à fábrica." |
+| 6 | **Adapter** | [EmailSender:12](https://github.com/devpetry/medical-field/blob/main/services/document-service/app/email_sender.py#L12) e [criar_sender():43](https://github.com/devpetry/medical-field/blob/main/services/document-service/app/email_sender.py#L43) | "O serviço só conhece enviar(mensagem). Por trás, SMTP ou arquivo .eml, escolhido pelo .env, sem mudar o código." |
+| 7 | **Chain of Responsibility** | [server.js:11:11](https://github.com/devpetry/medical-field/blob/main/services/auth-service/src/server.js#L11) e [server.js:45:45](https://github.com/devpetry/medical-field/blob/main/services/auth-service/src/server.js#L45); os elos em [accessLog:16](https://github.com/devpetry/medical-field/blob/main/services/auth-service/src/middleware.js#L16) e [autenticar:52](https://github.com/devpetry/medical-field/blob/main/services/auth-service/src/middleware.js#L52) | "Cada requisição passa por uma cadeia: primeiro o log de acesso, depois a autenticação, só então a regra de negócio. O mesmo existe no Java ([AccessLogFilter:26](https://github.com/devpetry/medical-field/blob/main/services/clinical-service/src/main/java/br/univates/medicalfield/clinical/config/AccessLogFilter.java#L26)) e no Python ([seguranca_e_auditoria:32](https://github.com/devpetry/medical-field/blob/main/services/document-service/app/main.py#L32))." |
+
+Para fechar: "São os três padrões sugeridos pelo enunciado, Repository, Strategy e Observer, mais quatro de livre escolha, cada um resolvendo um problema real do offline-first." O diagrama [`09-padroes-de-projeto`](diagramas/09-padroes-de-projeto.png) resume a tabela.
+
+---
+
+## 10. Extras, se sobrar tempo
 
 - **Auditoria:** portal → **Auditoria** → **Logs de acesso** (IP, profissional, rota, status, tempo) e **Eventos de sincronização** (estratégia e resultado de cada item).
 - **Regra clínica:** no cliente, num atendimento, ponha uma dose acima do máximo: aparece o **Alerta de segurança clínica**. No Swagger ou no Postman, o mesmo atendimento volta **422**.
@@ -246,7 +265,7 @@ SELECT chave, entidade, resultado FROM clinical.idempotencia ORDER BY processado
 
 ---
 
-## 10. Se algo der errado
+## 11. Se algo der errado
 
 | Sintoma | Fazer (no terminal da VM) |
 | --- | --- |
@@ -265,7 +284,7 @@ Se um passo falhar, diga o que deveria acontecer e por quê: entender o comporta
 
 ---
 
-## 11. Ao terminar
+## 12. Ao terminar
 
 1. Feche o cliente e saia do portal (**Sair**).
 2. No PC do professor, apague o banco local do cliente e os arquivos baixados:
@@ -279,7 +298,7 @@ rm -rf ~/.config/medicalfield-client ~/Downloads/MedicalField-1.0.0.AppImage ~/D
 
 ---
 
-## 12. Manutenção da VM (fora do dia)
+## 13. Manutenção da VM (fora do dia)
 
 **Atualizar o código** (mantém dados e `.env`). Na sua máquina, na raiz do repositório:
 
