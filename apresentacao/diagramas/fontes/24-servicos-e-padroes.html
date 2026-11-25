@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><title>24 · Serviços e padrões</title><link rel="stylesheet" href="base.css">
+<style>
+.col { position:absolute; top:230px; width:420px; height:740px; display:flex; flex-direction:column; gap:18px; }
+.col .caixa { position:static; }
+.cab { height:200px; }
+.cab .ling { font-size:24px; color:var(--texto); font-weight:700; margin-top:6px; }
+.pad { padding:16px 24px; }
+.pad h3 { font-size:28px; margin-bottom:4px; }
+.pad p { font-size:20px; }
+.pad.sug h3::after { content:"sugerido"; font-size:16px; font-weight:700; margin-left:10px; padding:2px 10px; border-radius:999px;
+  background:var(--c); color:#071224; vertical-align:middle; }
+</style></head>
+<body>
+<h1>Cada serviço, sua linguagem e seus padrões</h1>
+<div class="sub">Os sete padrões estão espalhados pelas três linguagens do back-end e pelo cliente</div>
+
+<div class="col" style="left:80px">
+  <div class="caixa cliente cab"><span class="tag">cliente desktop</span><h3>Electron</h3><p class="ling">TypeScript · React · SQLite</p></div>
+  <div class="caixa cliente pad sug"><h3>Repository</h3><p>todo o SQL nos repositórios</p></div>
+  <div class="caixa banco pad"><h3>Transactional Outbox</h3><p>dado + fila na mesma transação</p></div>
+  <div class="caixa cliente pad sug"><h3>Observer</h3><p>a rede volta → sincroniza</p></div>
+</div>
+
+<div class="col" style="left:550px">
+  <div class="caixa node cab"><span class="tag">auth-service</span><h3>Login e JWT</h3><p class="ling">Node.js · Express</p></div>
+  <div class="caixa nginx pad"><h3>Chain of Responsibility</h3><p>accessLog → autenticar (401) → somenteAdmin (403)</p></div>
+</div>
+
+<div class="col" style="left:1020px">
+  <div class="caixa java cab"><span class="tag">clinical-service</span><h3>Dados clínicos e sync</h3><p class="ling">Java 21 · Spring Boot</p></div>
+  <div class="caixa java pad sug"><h3>Strategy</h3><p>LastWriteWins · AppendOnly · ServerWins</p></div>
+  <div class="caixa java pad"><h3>Factory</h3><p>escolhe a estratégia pela entidade</p></div>
+  <div class="caixa cliente pad sug"><h3>Repository</h3><p>Spring Data</p></div>
+  <div class="caixa nginx pad"><h3>Chain of Responsibility</h3><p>AccessLogFilter + Spring Security</p></div>
+</div>
+
+<div class="col" style="left:1490px; width:350px">
+  <div class="caixa python cab"><span class="tag">document-service</span><h3>PDF e e-mail</h3><p class="ling">Python · FastAPI</p></div>
+  <div class="caixa python pad"><h3>Adapter</h3><p>EmailSender → SMTP (VM) ou arquivo</p></div>
+  <div class="caixa nginx pad"><h3>Chain of Responsibility</h3><p>middleware de segurança e auditoria</p></div>
+</div>
+
+<div class="rodape">MedicalField · Arquiteturas de Software · Univates 2026/B</div>
+<script src="base.js"></script>
+</body></html>

@@ -23,6 +23,7 @@ Cada parte do sistema tem uma cor, a mesma em todas as imagens: **azul-claro** =
 | [`07-login-e-token`](diagramas/07-login-e-token.png) | Login, JWT validado pelos três serviços e login offline | Passos 1 e 5 |
 | [`08-rede-e-portas`](diagramas/08-rede-e-portas.png) | O que fica aberto na VM (80 e 22) e o que fica só em 127.0.0.1 | Segurança e o papel do Nginx |
 | [`09-padroes-de-projeto`](diagramas/09-padroes-de-projeto.png) | Os sete padrões, onde estão e para quê | Pergunta dos padrões |
+| [`24-servicos-e-padroes`](diagramas/24-servicos-e-padroes.png) | Cada serviço com a sua linguagem e os padrões que usa | "Que padrão fica em qual serviço?" |
 | [`10-repository-estrutura`](diagramas/10-repository-estrutura.png) · [`11-repository-codigo`](diagramas/11-repository-codigo.png) | Repository: a estrutura em caixas e o trecho real do código, com as linhas destacadas | Seção 9 do roteiro |
 | [`12-outbox-estrutura`](diagramas/12-outbox-estrutura.png) · [`13-outbox-codigo`](diagramas/13-outbox-codigo.png) | Transactional Outbox: a estrutura em caixas e o trecho real do código, com as linhas destacadas | Seção 9 do roteiro |
 | [`14-observer-estrutura`](diagramas/14-observer-estrutura.png) · [`15-observer-codigo`](diagramas/15-observer-codigo.png) | Observer: a estrutura em caixas e o trecho real do código, com as linhas destacadas | Seção 9 do roteiro |
